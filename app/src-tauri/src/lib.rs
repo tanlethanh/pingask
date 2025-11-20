@@ -65,19 +65,6 @@ fn toggle_window(window: Window) {
     if window.is_visible().unwrap_or(false) {
         let _ = window.hide();
     } else {
-        // Position window in upper third of screen, like Raycast
-        if let Ok(monitor) = window.current_monitor() {
-            if let Some(monitor) = monitor {
-                let size = monitor.size();
-                let window_width = 600.0;
-                
-                // Center horizontally, position in upper third vertically
-                let x = (size.width as f64 - window_width) / 2.0;
-                let y = size.height as f64 * 0.2; // 20% from top
-                
-                let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
-            }
-        }
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -107,19 +94,6 @@ fn update_shortcut(app: AppHandle, new_shortcut: String) -> Result<(), String> {
                 if window.is_visible().unwrap_or(false) {
                     let _ = window.hide();
                 } else {
-                    // Position window in upper third of screen
-                    if let Ok(monitor) = window.current_monitor() {
-                        if let Some(monitor) = monitor {
-                            let size = monitor.size();
-                            let window_width = 600.0;
-                            let _window_height = 400.0;
-                            
-                            let x = (size.width as f64 - window_width) / 2.0;
-                            let y = size.height as f64 * 0.2;
-                            
-                            let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
-                        }
-                    }
                     let _ = window.show();
                     let _ = window.set_focus();
                 }
@@ -165,19 +139,6 @@ pub fn run() {
                                 if window.is_visible().unwrap_or(false) {
                                     let _ = window.hide();
                                 } else {
-                                    // Position window in upper third of screen, like Raycast
-                                    if let Ok(monitor) = window.current_monitor() {
-                                        if let Some(monitor) = monitor {
-                                            let size = monitor.size();
-                                            let window_width = 600.0;
-                                            
-                                            // Center horizontally, position in upper third vertically
-                                            let x = (size.width as f64 - window_width) / 2.0;
-                                            let y = size.height as f64 * 0.2; // 20% from top
-                                            
-                                            let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
-                                        }
-                                    }
                                     let _ = window.show();
                                     let _ = window.set_focus();
                                 }

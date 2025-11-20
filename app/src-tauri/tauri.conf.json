@@ -17,7 +17,7 @@
         "width": 600,
         "height": 400,
         "resizable": false,
-        "center": false,
+        "center": true,
         "decorations": false,
         "alwaysOnTop": true,
         "visible": false,
