@@ -1,5 +1,5 @@
-use tauri::{Emitter, Manager, Window};
-use tauri_plugin_global_shortcut::ShortcutState;
+use tauri::{AppHandle, Emitter, Manager, Window};
+use tauri_plugin_global_shortcut::{ShortcutState, GlobalShortcutExt, Shortcut};
 use futures_util::StreamExt;
 
 #[tauri::command]
@@ -65,6 +65,19 @@ fn toggle_window(window: Window) {
     if window.is_visible().unwrap_or(false) {
         let _ = window.hide();
     } else {
+        // Position window in upper third of screen, like Raycast
+        if let Ok(monitor) = window.current_monitor() {
+            if let Some(monitor) = monitor {
+                let size = monitor.size();
+                let window_width = 600.0;
+                
+                // Center horizontally, position in upper third vertically
+                let x = (size.width as f64 - window_width) / 2.0;
+                let y = size.height as f64 * 0.2; // 20% from top
+                
+                let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
+            }
+        }
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -75,25 +88,96 @@ fn hide_window(window: Window) {
     let _ = window.hide();
 }
 
+#[tauri::command]
+fn update_shortcut(app: AppHandle, new_shortcut: String) -> Result<(), String> {
+    // Unregister all shortcuts first
+    if let Err(e) = app.global_shortcut().unregister_all() {
+        return Err(format!("Failed to unregister shortcuts: {}", e));
+    }
+
+    // Parse the shortcut string
+    let shortcut: Shortcut = new_shortcut.parse()
+        .map_err(|e| format!("Invalid shortcut format: {}", e))?;
+
+    // Register new shortcut
+    let handle = app.clone();
+    if let Err(e) = app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+        if event.state == ShortcutState::Pressed {
+            if let Some(window) = handle.get_webview_window("main") {
+                if window.is_visible().unwrap_or(false) {
+                    let _ = window.hide();
+                } else {
+                    // Position window in upper third of screen
+                    if let Ok(monitor) = window.current_monitor() {
+                        if let Some(monitor) = monitor {
+                            let size = monitor.size();
+                            let window_width = 600.0;
+                            let _window_height = 400.0;
+                            
+                            let x = (size.width as f64 - window_width) / 2.0;
+                            let y = size.height as f64 * 0.2;
+                            
+                            let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
+                        }
+                    }
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+        }
+    }) {
+        return Err(format!("Failed to register shortcut: {}. It might conflict with another application.", e));
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![ask_ai, toggle_window, hide_window])
+        .invoke_handler(tauri::generate_handler![ask_ai, toggle_window, hide_window, update_shortcut])
         .setup(|app| {
             let handle = app.handle().clone();
 
-            // Register global shortcut Cmd+Shift+Space (or Ctrl+Shift+Space on Windows/Linux)
+            // Load saved keybinding or use default
+            let default_shortcut = "CmdOrCtrl+Shift+Space";
+            let shortcut = {
+                use tauri_plugin_store::StoreExt;
+                match app.store("settings.json") {
+                    Ok(store) => {
+                        store.get("keybinding")
+                            .and_then(|v| v.as_str().map(|s| s.to_string()))
+                            .unwrap_or_else(|| default_shortcut.to_string())
+                    }
+                    Err(_) => default_shortcut.to_string()
+                }
+            };
+
+            // Register global shortcut
             app.handle().plugin(
                 tauri_plugin_global_shortcut::Builder::new()
-                    .with_shortcuts(["CmdOrCtrl+Shift+Space"])?
+                    .with_shortcuts([shortcut.as_str()])?
                     .with_handler(move |_app, _shortcut, event| {
                         if event.state == ShortcutState::Pressed {
                             if let Some(window) = handle.get_webview_window("main") {
                                 if window.is_visible().unwrap_or(false) {
                                     let _ = window.hide();
                                 } else {
+                                    // Position window in upper third of screen, like Raycast
+                                    if let Ok(monitor) = window.current_monitor() {
+                                        if let Some(monitor) = monitor {
+                                            let size = monitor.size();
+                                            let window_width = 600.0;
+                                            
+                                            // Center horizontally, position in upper third vertically
+                                            let x = (size.width as f64 - window_width) / 2.0;
+                                            let y = size.height as f64 * 0.2; // 20% from top
+                                            
+                                            let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
+                                        }
+                                    }
                                     let _ = window.show();
                                     let _ = window.set_focus();
                                 }

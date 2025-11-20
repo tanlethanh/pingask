@@ -5,7 +5,8 @@
 }
 
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
+    sans-serif;
   font-size: 16px;
   line-height: 1.5;
   font-weight: 400;
@@ -31,137 +32,409 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  background: rgba(30, 30, 30, 0.95);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  padding: 0;
+  background: rgba(28, 28, 30, 0.95);
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08);
 }
 
 .container.settings {
+  justify-content: flex-start;
+  padding: 20px 20px 24px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.back-btn {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 40px;
+  border-radius: 4px;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .settings h2 {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin: 0;
   color: #ffffff;
+  letter-spacing: -0.3px;
 }
 
-.settings p {
-  font-size: 14px;
-  color: #a0a0a0;
+.settings-section {
   margin-bottom: 24px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 5px;
+  letter-spacing: -0.1px;
+}
+
+.settings-description {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 10px;
+  font-weight: 400;
+  transition: color 0.2s ease;
+  min-height: 18px;
 }
 
 .settings-input {
   width: 100%;
-  padding: 12px 16px;
-  font-size: 15px;
-  background: rgba(60, 60, 60, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
   color: #ffffff;
   outline: none;
-  transition: all 0.2s ease;
-  margin-bottom: 16px;
+  transition: all 0.15s ease;
+  margin-bottom: 0;
+  -webkit-user-modify: read-write-plaintext-only;
 }
 
 .settings-input:focus {
-  background: rgba(70, 70, 70, 0.8);
-  border-color: rgba(100, 150, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(100, 150, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
 
-.settings-actions {
+.api-key-input {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.api-key-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.api-key-input:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.api-key-input:focus::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.keybinding-container {
   display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 40px;
+  position: relative;
+  transition: all 0.15s ease;
 }
 
-.settings-actions button {
-  padding: 10px 20px;
-  font-size: 14px;
+.keybinding-container:has(.record-btn.recording) {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+.keybinding-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
+    sans-serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.2px;
+}
+
+.key-separator {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
   font-weight: 500;
-  border-radius: 6px;
+  margin: 0 1px;
+}
+
+.record-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  letter-spacing: 0px;
+  flex-shrink: 0;
+}
+
+.record-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.record-btn.recording {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: rgba(239, 68, 68, 1);
+}
+
+.recording-dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(239, 68, 68, 1);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.keybinding-hidden-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.floating-save-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(0, 0, 0, 0.85);
   border: none;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  letter-spacing: -0.1px;
+  animation: slideUp 0.2s ease;
 }
 
-.settings-actions button[type="submit"] {
-  background: rgba(100, 150, 255, 0.9);
-  color: #ffffff;
+.floating-save-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
 }
 
-.settings-actions button[type="submit"]:hover:not(:disabled) {
-  background: rgba(100, 150, 255, 1);
+.floating-save-btn:active {
+  transform: translateY(0);
 }
 
-.settings-actions button[type="submit"]:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.settings-actions button[type="button"] {
-  background: rgba(60, 60, 60, 0.6);
-  color: #e8e8e8;
-}
-
-.settings-actions button[type="button"]:hover {
-  background: rgba(70, 70, 70, 0.8);
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .search-input {
   width: 100%;
-  padding: 16px 20px;
+  padding: 18px 20px;
   font-size: 18px;
-  background: rgba(60, 60, 60, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
   color: #ffffff;
   outline: none;
-  transition: all 0.2s ease;
-  margin-bottom: 16px;
+  transition: all 0.15s ease;
+  margin: 0;
+  -webkit-user-modify: read-write-plaintext-only;
+  letter-spacing: -0.2px;
 }
 
 .search-input::placeholder {
-  color: #808080;
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .search-input:focus {
-  background: rgba(70, 70, 70, 0.8);
-  border-color: rgba(100, 150, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(100, 150, 255, 0.1);
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.15);
 }
 
 .search-input:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.history-dropdown {
+  margin: 0;
+  background: transparent;
+  border-radius: 0;
+  overflow: hidden;
+  border: none;
+  animation: fadeIn 0.15s ease;
+}
+
+.history-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.history-item.selected {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.history-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-question {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 4px;
+  letter-spacing: -0.1px;
+}
+
+.history-preview {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delete-btn {
+  opacity: 0;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+}
+
+.history-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
 }
 
 .result {
   flex: 1;
-  padding: 16px;
-  background: rgba(40, 40, 40, 0.5);
-  border-radius: 8px;
-  margin-bottom: 12px;
+  padding: 20px;
+  background: transparent;
+  border-radius: 0;
+  margin: 0;
   overflow-y: auto;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.2s ease;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .result.markdown-body {
-  color: #e8e8e8;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 15px;
   line-height: 1.6;
   text-align: left;
 }
 
 .result.markdown-body p {
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
 }
 
 .result.markdown-body p:last-child {
@@ -169,19 +442,21 @@ body {
 }
 
 .result.markdown-body code {
-  background: rgba(60, 60, 60, 0.6);
-  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 7px;
   border-radius: 4px;
-  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-family: "SF Mono", "Monaco", "Menlo", monospace;
   font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .result.markdown-body pre {
-  background: rgba(20, 20, 20, 0.8);
-  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 14px;
   border-radius: 6px;
   overflow-x: auto;
-  margin: 8px 0;
+  margin: 12px 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .result.markdown-body pre code {
@@ -189,13 +464,14 @@ body {
   padding: 0;
 }
 
-.result.markdown-body ul, .result.markdown-body ol {
-  margin: 8px 0;
-  padding-left: 20px;
+.result.markdown-body ul,
+.result.markdown-body ol {
+  margin: 10px 0;
+  padding-left: 24px;
 }
 
 .result.markdown-body li {
-  margin: 4px 0;
+  margin: 5px 0;
 }
 
 .result.markdown-body strong {
@@ -212,7 +488,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #a0a0a0;
+  color: rgba(255, 255, 255, 0.4);
   font-size: 14px;
 }
 
@@ -220,19 +496,21 @@ body {
   width: 16px;
   height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.1);
-  border-top-color: rgba(100, 150, 255, 0.8);
+  border-top-color: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-2px);
   }
   to {
     opacity: 1;
@@ -240,61 +518,101 @@ body {
   }
 }
 
+.recent-queries {
+  flex: 1;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 0;
+  overflow-y: auto;
+  border: none;
+  animation: fadeIn 0.15s ease;
+}
+
+.recent-queries .history-item {
+  opacity: 0.7;
+}
+
+.recent-queries .history-item:hover {
+  opacity: 1;
+}
+
+.recent-queries .history-item.selected {
+  opacity: 1;
+}
+
+.recent-queries .history-question {
+  opacity: 0.9;
+}
+
+.recent-queries .history-preview {
+  opacity: 0.6;
+}
+
 .footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .shortcut {
   font-size: 12px;
-  color: #808080;
+  color: rgba(255, 255, 255, 0.35);
   font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 .settings-btn {
-  padding: 6px 12px;
+  padding: 6px;
   font-size: 12px;
-  background: rgba(60, 60, 60, 0.5);
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: #e8e8e8;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  letter-spacing: 0.1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-btn svg {
+  display: block;
 }
 
 .settings-btn:hover {
-  background: rgba(70, 70, 70, 0.7);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .settings-btn.warning {
-  background: rgba(255, 150, 0, 0.2);
-  border-color: rgba(255, 150, 0, 0.3);
-  color: #ffa500;
+  background: rgba(255, 159, 10, 0.1);
+  border-color: rgba(255, 159, 10, 0.3);
+  color: rgba(255, 159, 10, 1);
+  padding: 5px 12px;
 }
 
 .settings-btn.warning:hover {
-  background: rgba(255, 150, 0, 0.3);
-  border-color: rgba(255, 150, 0, 0.4);
+  background: rgba(255, 159, 10, 0.15);
+  border-color: rgba(255, 159, 10, 0.4);
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
 }
