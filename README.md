@@ -1,7 +1,7 @@
-# Tauri + React + Typescript
+# Pingask
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+A simple app for quickly asking something, AI cheatsheet
 
-## Recommended IDE Setup
+## Desktop app
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+Open by keybinding, it shows a search input like Raycast, type a short question like "Neovim jump to line", and it call LLM to give a super short answer.
