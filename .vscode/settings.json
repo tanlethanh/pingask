@@ -1,3 +1,6 @@
 {
-  "cSpell.words": ["Pingask"]
+  "cSpell.words": ["Pingask"],
+  "files.associations": {
+    "wrangler.json": "jsonc"
+  }
 }

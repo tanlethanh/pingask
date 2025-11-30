@@ -1,0 +1,13 @@
+{
+  "name": "pingask",
+  "version": "0.0.1",
+  "description": "Quick ask, quick search, quick answer at the speed of light.",
+  "scripts": {
+    "dev": "pnpm --filter api dev && pnpm --filter app dev",
+    "build": "pnpm --filter api build && pnpm --filter app build"
+  },
+  "keywords": ["ai", "assistant", "search", "answer", "light"],
+  "author": "Tan Le",
+  "license": "MIT",
+  "packageManager": "pnpm@10.23.0"
+}
