@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PingAsk</title>
+    <meta name="description" content="Quick ask, quick search, quick answer at the speed of light.">
+    <link rel="stylesheet" href="index.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.7/dist/cdn.min.js"></script>
+</head>
+
+<body>
+    <div id="root" x-data="chatStream()">
+        <div class="container">
+            <h1>PingAsk</h1>
+
+            <div class="messages">
+                <template x-for="message in messages" :key="message.id">
+                    <div :class="'message message-' + message.role">
+                        <div class="message-content" x-text="message.text"></div>
+                    </div>
+                </template>
+            </div>
+
+            <form class="chat_input" @submit.prevent="askQuestion">
+                <input type="text" x-model="question" :disabled="isLoading" placeholder="Ask a question...">
+                <button type="submit" :disabled="isLoading || !question.trim()">
+                    <span x-show="!isLoading">Ask</span>
+                    <span x-show="isLoading">...</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('chatStream', () => ({
+            messages: [],
+            question: "",
+            isLoading: false,
+            async askQuestion() {
+                if (!this.question.trim()) return;
+
+                this.messages.push({ id: Date.now(), role: "user", text: this.question });
+
+                const q = this.question;
+                this.question = "";
+                this.isLoading = true;
+
+                const msgIndex = this.messages.length;
+                this.messages.push({ id: Date.now() + 1, role: "assistant", text: "" });
+
+                try {
+                    const response = await fetch("/api/ask?question=" + encodeURIComponent(q));
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = "";
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop();
+
+                        for (const line of lines.filter(l => l.trim())) {
+                            const data = JSON.parse(line);
+                            if (data.type === "content") {
+                                this.messages[msgIndex] = {
+                                    ...this.messages[msgIndex],
+                                    text: this.messages[msgIndex].text + data.delta
+                                };
+                            }
+                        }
+                    }
+                } catch (err) {
+                    this.messages[msgIndex] = {
+                        ...this.messages[msgIndex],
+                        text: "Error: " + err.message
+                    };
+                }
+
+                this.isLoading = false;
+            }
+        }));
+    });
+</script>
+
+</html>
