@@ -1,6 +1,18 @@
+import OpenAI from "openai";
 import { OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
 import { AskResponseChunk, type AppContext } from "../types";
+import { env } from "cloudflare:workers";
+
+const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+
+const INSTRUCTIONS = `
+Give ultra-concise answer. MAX 100 WORDS. \
+- For quick fact, command: super short, concise, essential answer. \
+- For 'how to' question: short brief steps. \
+- For general question: a concise but thorough answer. \
+Note: code/command must be wrapped in code block. NO assumptions/guessing.
+`.trim();
 
 export class Ask extends OpenAPIRoute {
 	schema = {
@@ -29,34 +41,43 @@ export class Ask extends OpenAPIRoute {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { question } = data.query;
 
-		const encoder = new TextEncoder();
-		const words = `The answer to your question "${question}" is quite interesting. Let me explain it in detail with a comprehensive response that demonstrates streaming capabilities.`.split(' ');
+		if (question.length > 100) {
+			return c.json({ error: "Question is too long. Please keep it under 100 characters." }, 400);
+		}
+
+		const response = await client.chat.completions.create({
+			model: "gpt-4.1-nano",
+			messages: [
+				{ role: "system", content: INSTRUCTIONS },
+				{ role: "user", content: question },
+			],
+			temperature: 0.7,
+			max_completion_tokens: 200,
+			stream: true,
+			stream_options: { include_usage: true },
+		});
 
 		const stream = new ReadableStream({
 			async start(controller) {
-				for (const word of words) {
-					const chunk = JSON.stringify({
-						type: "content",
-						delta: word + ' ',
-					} satisfies z.infer<typeof AskResponseChunk>) + '\n';
-
-					controller.enqueue(encoder.encode(chunk));
-					await new Promise(resolve => setTimeout(resolve, 50));
+				try {
+					for await (const chunk of response) {
+						if (chunk.choices[0].delta.content) {
+							const delta = chunk.choices[0].delta.content
+							controller.enqueue(encodeChunk({ type: "content", delta }));
+						}
+						if (chunk.choices[0].finish_reason) {
+							controller.enqueue(encodeChunk({ type: "done", usage: chunk.usage }));
+							controller.close();
+							// Save the usage to the database
+						}
+					}
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error)
+					controller.enqueue(encodeChunk({ type: "error", error: message }));
+					controller.close()
 				}
-
-				const doneChunk = JSON.stringify({
-					type: "done",
-					usage: {
-						prompt_tokens: 10,
-						completion_tokens: words.length,
-						total_tokens: 10 + words.length,
-					},
-				} satisfies z.infer<typeof AskResponseChunk>) + '\n';
-
-				controller.enqueue(encoder.encode(doneChunk));
-				controller.close();
 			}
-		});
+		})
 
 		return new Response(stream, {
 			headers: {
@@ -65,4 +86,8 @@ export class Ask extends OpenAPIRoute {
 			},
 		});
 	}
+}
+
+const encodeChunk = (chunk: AskResponseChunk) => {
+	return new TextEncoder().encode(JSON.stringify(chunk) + '\n');
 }
