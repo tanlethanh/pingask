@@ -21,7 +21,7 @@ function App() {
   const historyItemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const recentItemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const { apiKey, keybinding, saveApiKey, saveKeybinding } = useSettings();
+  const { keybinding, saveKeybinding } = useSettings();
   const { history, filteredHistory, saveToHistory, deleteHistoryItem } = useHistory(question);
   const { answer, renderedAnswer, loading, askAI, resetAnswer, setAnswerFromHistory, answerRef } = useAI();
 
@@ -114,14 +114,9 @@ function App() {
     }
   }, [selectedRecentIndex]);
 
-  const handleSaveSettings = async (newApiKey: string, newKeybinding: string) => {
+  const handleSaveSettings = async (newKeybinding: string) => {
     try {
-      if (newApiKey !== apiKey) {
-        await saveApiKey(newApiKey);
-      }
-      if (newKeybinding !== keybinding) {
-        await saveKeybinding(newKeybinding);
-      }
+      await saveKeybinding(newKeybinding);
     } catch (error) {
       alert(`Failed to save settings: ${error}`);
       throw error;
@@ -133,16 +128,11 @@ function App() {
 
     if (!question.trim()) return;
 
-    if (!apiKey) {
-      setShowSettings(true);
-      return;
-    }
-
     setSelectedHistoryIndex(-1);
     const currentQuestion = question.trim();
 
     try {
-      await askAI(currentQuestion, apiKey);
+      await askAI(currentQuestion);
       setTimeout(() => {
         const currentAnswer = answerRef.current;
         if (currentAnswer) {
@@ -205,7 +195,6 @@ function App() {
   if (showSettings) {
     return (
       <Settings
-        apiKey={apiKey}
         keybinding={keybinding}
         onClose={() => setShowSettings(false)}
         onSave={handleSaveSettings}
@@ -248,7 +237,6 @@ function App() {
 
       <Footer
         hasContent={!!(answer || question.trim())}
-        apiKey={apiKey}
         onSettingsClick={() => setShowSettings(true)}
       />
     </div>

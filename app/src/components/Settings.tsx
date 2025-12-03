@@ -3,14 +3,12 @@ import { formatKeybindingDisplay, parseKeybindingFromEvent } from "../utils/keyb
 import { BackIcon, CheckIcon, RecordIcon } from "../icons";
 
 interface SettingsProps {
-  apiKey: string;
   keybinding: string;
   onClose: () => void;
-  onSave: (apiKey: string, keybinding: string) => Promise<void>;
+  onSave: (keybinding: string) => Promise<void>;
 }
 
-export function Settings({ apiKey, keybinding, onClose, onSave }: SettingsProps) {
-  const [apiKeyInput, setApiKeyInput] = useState("");
+export function Settings({ keybinding, onClose, onSave }: SettingsProps) {
   const [keybindingInput, setKeybindingInput] = useState(keybinding);
   const [isRecordingKeybind, setIsRecordingKeybind] = useState(false);
   const keybindRef = useRef<HTMLInputElement>(null);
@@ -19,18 +17,13 @@ export function Settings({ apiKey, keybinding, onClose, onSave }: SettingsProps)
     setKeybindingInput(keybinding);
   }, [keybinding]);
 
-  const hasChanges =
-    (apiKeyInput && apiKeyInput !== apiKey) ||
-    (keybindingInput !== keybinding);
+  const hasChanges = keybindingInput !== keybinding;
 
   const handleSave = async () => {
-    const newApiKey = apiKeyInput || apiKey;
-    await onSave(newApiKey, keybindingInput);
-    setApiKeyInput("");
+    await onSave(keybindingInput);
   };
 
   const handleClose = () => {
-    setApiKeyInput("");
     setKeybindingInput(keybinding);
     onClose();
   };
@@ -76,29 +69,7 @@ export function Settings({ apiKey, keybinding, onClose, onSave }: SettingsProps)
         <h2>Settings</h2>
       </div>
 
-        <div className="settings-section">
-          <label className="settings-label">OpenAI API Key</label>
-          <p className="settings-description">Enter your API key to continue</p>
-          <input
-            type="password"
-            value={apiKeyInput || apiKey}
-            onChange={(e) => setApiKeyInput(e.target.value)}
-            placeholder="sk-..."
-            className="settings-input api-key-input"
-            autoCapitalize="off"
-            autoCorrect="off"
-            autoComplete="off"
-            spellCheck="false"
-            data-gramm="false"
-            data-gramm_editor="false"
-            data-enable-grammarly="false"
-            data-1p-ignore
-            data-lpignore="true"
-            data-form-type="other"
-          />
-        </div>
-
-        <div className="settings-section">
+      <div className="settings-section">
           <label className="settings-label">Global Keybinding</label>
           <p className="settings-description">
             {isRecordingKeybind
