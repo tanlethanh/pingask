@@ -3,23 +3,11 @@ import { load } from "@tauri-apps/plugin-store";
 import { invoke } from "@tauri-apps/api/core";
 
 export function useSettings() {
-  const [apiKey, setApiKey] = useState("");
   const [keybinding, setKeybinding] = useState("CmdOrCtrl+Shift+Space");
 
   useEffect(() => {
-    loadApiKey();
     loadKeybinding();
   }, []);
-
-  const loadApiKey = async () => {
-    try {
-      const store = await load("settings.json");
-      const key = await store.get<string>("openai_api_key");
-      if (key) setApiKey(key);
-    } catch (error) {
-      console.error("Failed to load API key:", error);
-    }
-  };
 
   const loadKeybinding = async () => {
     try {
@@ -28,18 +16,6 @@ export function useSettings() {
       if (savedKeybinding) setKeybinding(savedKeybinding);
     } catch (error) {
       console.error("Failed to load keybinding:", error);
-    }
-  };
-
-  const saveApiKey = async (newApiKey: string) => {
-    try {
-      const store = await load("settings.json");
-      await store.set("openai_api_key", newApiKey);
-      await store.save();
-      setApiKey(newApiKey);
-    } catch (error) {
-      console.error("Failed to save API key:", error);
-      throw error;
     }
   };
 
@@ -56,5 +32,5 @@ export function useSettings() {
     }
   };
 
-  return { apiKey, keybinding, saveApiKey, saveKeybinding };
+  return { keybinding, saveKeybinding };
 }
