@@ -4,6 +4,8 @@ import { z } from "zod";
 
 export type AppContext = Context<{ Bindings: Env }>;
 
+export type AskResponseChunk = z.infer<typeof AskResponseChunk>;
+
 export const AskResponseChunk = z.discriminatedUnion("type", [
 	z.object({
 		type: z.literal("content"),
@@ -12,8 +14,8 @@ export const AskResponseChunk = z.discriminatedUnion("type", [
 	z.object({
 		type: z.literal("done"),
 		usage: z.object({
-			prompt_tokens: z.number().optional(),
-			completion_tokens: z.number().optional(),
+			input_tokens: z.number().optional(),
+			output_tokens: z.number().optional(),
 			total_tokens: z.number().optional(),
 		}).optional(),
 	}),
