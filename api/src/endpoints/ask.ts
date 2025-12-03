@@ -8,9 +8,9 @@ const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
 const INSTRUCTIONS = `
 Give ultra-concise answer. MAX 100 WORDS. \
-- For quick fact, command: super short, concise, essential answer. \
-- For 'how to' question: short brief steps. \
-- For general question: a concise but thorough answer. \
+- Quick fact/command question: give only super short, concise, essential answer. \
+- 'how to' question: give short brief steps. \
+- General question: give a concise but thorough answer. \
 Note: code/command must be wrapped in code block. NO assumptions/guessing.
 `.trim();
 
