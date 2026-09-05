@@ -1,0 +1,31 @@
+<svg class="icon" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PingAsk icon">
+  <defs>
+    <linearGradient id="gr-m0" x1="512" y1="0" x2="512" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2A2A30"/>
+      <stop offset="0.52" stop-color="#1C1C20"/>
+      <stop offset="1" stop-color="#121216"/>
+    </linearGradient>
+    <radialGradient id="tl-m0" cx="512" cy="24" r="780" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dt-m0" x1="588" y1="180" x2="588" y2="692" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#CFCFD5"/>
+    </linearGradient>
+    <linearGradient id="rm-m0" x1="512" y1="0" x2="512" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"/>
+      <stop offset="0.42" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.11"/>
+    </linearGradient>
+    <filter id="cs-m0" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+  <clipPath id="cl-m0"><rect width="1024" height="1024" rx="240"/></clipPath>
+  <rect width="1024" height="1024" rx="240" fill="url(#gr-m0)"/>
+  <rect width="1024" height="1024" rx="240" fill="url(#tl-m0)"/>
+  <g clip-path="url(#cl-m0)"><circle cx="588" cy="472" r="250" fill="#000000" fill-opacity="0.5" filter="url(#cs-m0)"/>
+  <circle cx="588" cy="436" r="256" fill="url(#dt-m0)"/></g>
+  <rect x="2" y="2" width="1020" height="1020" rx="238" fill="none" stroke="url(#rm-m0)" stroke-width="4"/>
+</svg>

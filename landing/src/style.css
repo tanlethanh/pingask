@@ -1,0 +1,565 @@
+/*
+ * PingAsk landing.
+ *
+ * Rules the page keeps to: flat surfaces, hairline borders instead of fills, one accent
+ * spent in one place (the copy confirmation), type that steps in real ratios, and no
+ * decoration that isn't doing work. Nothing here paints a gradient or a glow.
+ */
+
+:root {
+  --bg: #08080a;
+  --fg: #f3f3f6;
+  --muted: #8b8b96;
+  --faint: #5f5f6a;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.13);
+  --accent: #a9b4ff;
+
+  --wrap: 1080px;
+  --gutter: 28px;
+  --font:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px / 1.6 var(--font);
+  letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 550;
+  letter-spacing: -0.028em;
+  line-height: 1.14;
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+/*
+ * The keycap the app itself draws (.pa-kbd in src/ui/styles.css): a flat cap in the
+ * UI font, no bevel and no mono slug. Someone who has used PingAsk should recognise
+ * the key. Sized off the surrounding text so it works in the 16.5px lede and the
+ * 14.5px cards alike.
+ */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35em;
+  padding: 0.25em 0.4em;
+  transform: translateY(-0.05em);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  font-family: var(--font);
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0;
+}
+
+/* A chord is two caps, so they need air between them. */
+kbd + kbd {
+  margin-left: 4px;
+}
+
+/* ── nav ─────────────────────────────────────────────────────────────── */
+
+/* The bar is the page colour; only the hairline says where it ends. */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 58px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 560;
+  letter-spacing: -0.015em;
+}
+
+.brand img {
+  border-radius: 6px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 26px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.nav-links a:hover {
+  color: var(--fg);
+}
+
+/* ── hero ────────────────────────────────────────────────────────────── */
+
+.hero {
+  padding: 104px var(--gutter) 0;
+  text-align: center;
+}
+
+h1 {
+  font-size: clamp(36px, 5vw, 58px);
+}
+
+.lede {
+  max-width: 570px;
+  margin: 22px auto 0;
+  color: var(--muted);
+  font-size: 16.5px;
+  line-height: 1.62;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 36px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: #fff;
+  color: #08080a;
+  font-size: 14.5px;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.btn svg {
+  margin-top: -1px;
+}
+
+.btn:hover {
+  background: #e6e6ec;
+}
+
+.btn:active {
+  background: #d5d5dd;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.curl {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 5px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 100%;
+}
+
+.curl code {
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.curl code::-webkit-scrollbar {
+  display: none;
+}
+
+.curl button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.curl button:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.curl button.done {
+  color: var(--accent);
+}
+
+.meta {
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+.meta a {
+  color: var(--muted);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.meta a:hover {
+  color: var(--fg);
+}
+
+/* ── screenshot ──────────────────────────────────────────────────────── */
+
+.shot {
+  margin: 78px auto 0;
+}
+
+/*
+ * The shot is the panel alone, trimmed to its own rounded edge with transparent
+ * corners, so the page adds no chrome. drop-shadow follows that alpha at whatever
+ * size the image lands on; a box-shadow would draw a rectangle behind it.
+ */
+.frame {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.shot:hover .frame {
+  transform: translateY(-3px);
+}
+
+.frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 26px 46px rgba(0, 0, 0, 0.7));
+}
+
+.shot figcaption {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+/* ── sections ────────────────────────────────────────────────────────── */
+
+.section {
+  margin-top: 110px;
+  padding-top: 44px;
+  border-top: 1px solid var(--line);
+  /* Clears the sticky bar when a hash link lands on a section. */
+  scroll-margin-top: 76px;
+}
+
+.section > h2 {
+  margin-bottom: 36px;
+  font-size: 22px;
+  letter-spacing: -0.024em;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* The 1px gaps above are the grid showing through; each cell paints the page back. */
+.features article {
+  position: relative;
+  padding: 26px 28px 30px;
+  background: var(--bg);
+}
+
+.features h3 {
+  margin-bottom: 9px;
+  font-size: 16px;
+  letter-spacing: -0.016em;
+}
+
+.features p {
+  color: var(--muted);
+  font-size: 14.5px;
+}
+
+.providers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 0;
+  margin: 44px 0 0;
+  padding: 0;
+  list-style: none;
+  font: 500 11.5px / 1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.providers li {
+  padding: 0 20px;
+}
+
+/* ── install ─────────────────────────────────────────────────────────── */
+
+.ways {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 44px;
+}
+
+.ways > div:first-child {
+  padding-right: 44px;
+  border-right: 1px solid var(--line);
+}
+
+.ways h3 {
+  font-size: 16px;
+  letter-spacing: -0.016em;
+}
+
+.ways p {
+  margin: 10px 0 20px;
+  color: var(--muted);
+  font-size: 14.5px;
+  max-width: 44ch;
+}
+
+.ways pre {
+  margin: 0;
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #cfcfd8;
+  overflow-x: auto;
+}
+
+.fine {
+  margin-top: 32px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+/* ── faq ─────────────────────────────────────────────────────────────── */
+
+.faq details {
+  border-top: 1px solid var(--line);
+}
+
+.faq details:first-child {
+  border-top: 0;
+}
+
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px;
+  font-weight: 480;
+  color: #dededf;
+}
+
+.faq summary:hover {
+  color: var(--fg);
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 6px;
+  border-right: 1.5px solid var(--faint);
+  border-bottom: 1.5px solid var(--faint);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+
+.faq details[open] summary::after {
+  transform: rotate(-135deg);
+  margin-top: 9px;
+}
+
+.faq details p {
+  padding: 0 0 20px;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 14.5px;
+}
+
+/* ── footer ──────────────────────────────────────────────────────────── */
+
+footer {
+  margin-top: 120px;
+  border-top: 1px solid var(--line);
+}
+
+.foot-in {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 26px;
+  padding-bottom: 44px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+.foot-in a {
+  margin-left: 20px;
+}
+
+.foot-in a:hover,
+.fine a:hover {
+  color: var(--fg);
+}
+
+.fine a {
+  color: var(--muted);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+/* ── responsive ──────────────────────────────────────────────────────── */
+
+@media (max-width: 780px) {
+  :root {
+    --gutter: 20px;
+  }
+
+  .nav-links a:not(:last-child) {
+    display: none;
+  }
+
+  .hero {
+    padding-top: 66px;
+  }
+
+  .cta {
+    flex-direction: column;
+  }
+
+  .btn,
+  .curl {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .shot {
+    margin-top: 52px;
+  }
+
+  .features,
+  .ways {
+    grid-template-columns: 1fr;
+  }
+
+  .ways {
+    gap: 32px;
+  }
+
+  .ways > div:first-child {
+    padding-right: 0;
+    padding-bottom: 32px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .section {
+    margin-top: 78px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .frame,
+  .btn,
+  .faq summary::after {
+    transition: none;
+  }
+
+  .shot:hover .frame {
+    transform: none;
+  }
+}

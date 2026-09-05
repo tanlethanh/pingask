@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>PingAsk: AI Spotlight for Mac. Ask anything with one keystroke.</title>
+    <meta
+      name="description"
+      content="PingAsk is a Spotlight-style AI launcher for macOS. Press Control P, ask anything, get an answer, follow up. Bring your own API key: OpenAI, Claude, OpenRouter or local Ollama. Open source, local, no telemetry."
+    />
+    <link rel="canonical" href="https://pingask.app/" />
+    <meta name="theme-color" content="#0b0b0d" />
+    <meta name="color-scheme" content="dark" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pingask.app/" />
+    <meta property="og:site_name" content="PingAsk" />
+    <meta property="og:title" content="PingAsk: AI Spotlight for Mac" />
+    <meta
+      property="og:description"
+      content="Press Control P, ask anything, get an answer. A Spotlight-style AI launcher for macOS with your own API keys. Open source, local, no telemetry."
+    />
+    <meta property="og:image" content="https://pingask.app/demo.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PingAsk: AI Spotlight for Mac" />
+    <meta
+      name="twitter:description"
+      content="Press Control P, ask anything, get an answer. Your keys, your models, your machine."
+    />
+    <meta name="twitter:image" content="https://pingask.app/demo.png" />
+
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon.png" />
+    <link rel="stylesheet" href="/src/style.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "PingAsk",
+        "url": "https://pingask.app/",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "macOS 11.0 or later",
+        "description": "A Spotlight-style AI launcher for macOS. Press a shortcut, ask anything, get an answer, follow up. Bring your own API key for OpenAI, Anthropic, OpenRouter or local Ollama.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "license": "https://opensource.org/licenses/MIT",
+        "isAccessibleForFree": true,
+        "downloadUrl": "https://github.com/tanlethanh/pingask/releases/latest",
+        "softwareHelp": "https://github.com/tanlethanh/pingask",
+        "author": { "@type": "Person", "name": "Tan Le" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is PingAsk free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. PingAsk is free and open source under the MIT license. There is no subscription. You pay your model provider directly, or nothing at all if you run local models with Ollama."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which AI models does PingAsk support?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "OpenAI and Anthropic with an API key, ChatGPT and Claude with your existing subscription sign-in, every model on OpenRouter, and any local model served by Ollama."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does PingAsk send my data anywhere?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Only to the model provider you choose. There is no PingAsk backend, no account and no telemetry. Threads and keys stay in the app data directory on your Mac."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is PingAsk different from Raycast AI?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PingAsk does one thing: ask and answer. It uses your own API key instead of a Pro subscription, and it is a small, open source, single-purpose panel rather than a launcher platform."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I install PingAsk on macOS?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Download the signed and notarized DMG and drag PingAsk to Applications, or run curl -fsSL pingask.app/install.sh | sh in a terminal. Press Control P to open it. macOS 11 or later, Apple Silicon and Intel."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <header class="nav">
+      <div class="wrap nav-in">
+        <a class="brand" href="/">
+          <img src="/icon.svg" width="24" height="24" alt="" />
+          <span>PingAsk</span>
+        </a>
+        <nav class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#install">Install</a>
+          <a href="#faq">FAQ</a>
+          <a href="https://github.com/tanlethanh/pingask">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero wrap">
+        <h1>Ask anything on your Mac,<br />without leaving what you're doing.</h1>
+        <p class="lede">
+          PingAsk is a Spotlight-style AI launcher for macOS. Press <kbd>Control</kbd><kbd>P</kbd>,
+          type a question, read the answer, follow up. Then it's gone. Your keys, your models, your
+          machine.
+        </p>
+
+        <div class="cta">
+          <a class="btn" id="download" href="https://github.com/tanlethanh/pingask/releases/latest">
+            <svg role="img" viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+            <span>Download for Mac</span>
+          </a>
+
+          <div class="curl">
+            <code id="curlcmd">curl -fsSL pingask.app/install.sh | sh</code>
+            <button id="copy" type="button" aria-label="Copy install command">
+              <svg viewBox="0 0 14 14" width="13" height="13" aria-hidden="true">
+                <rect x="4.6" y="1.4" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.3" />
+                <path d="M9.4 12.6h-6a2 2 0 0 1-2-2v-6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p class="meta" id="dlmeta">Apple Silicon &amp; Intel · macOS 11+ · free, MIT</p>
+      </section>
+
+      <figure class="shot wrap">
+        <div class="frame">
+          <img
+            src="/demo.png"
+            width="1240"
+            height="646"
+            alt="The PingAsk panel on macOS: an ask field above recent threads (notebook lm, aws t2 small vs t4g small, git copy commit) with the model picker in the footer"
+            fetchpriority="high"
+          />
+        </div>
+        <figcaption>One panel. Ask, answer, and every past thread as a cheatsheet.</figcaption>
+      </figure>
+
+      <section class="section wrap" id="how">
+        <h2>How it works</h2>
+        <div class="features">
+          <article>
+            <h3>One keystroke, no window</h3>
+            <p>
+              <kbd>Control</kbd><kbd>P</kbd> opens the panel over whatever app you're in, and
+              <kbd>esc</kbd> puts it away. Rebind it to anything in settings. Nothing in your Dock,
+              nothing in your way.
+            </p>
+          </article>
+          <article>
+            <h3>Your key, any model</h3>
+            <p>
+              Paste an OpenAI, Anthropic or OpenRouter key, sign in with a ChatGPT or Claude
+              subscription you already pay for, or point it at a local Ollama model. Switch per
+              question.
+            </p>
+          </article>
+          <article>
+            <h3>Local and quiet</h3>
+            <p>
+              No PingAsk backend, no account, no telemetry. Threads and credentials sit in your app
+              data directory. Requests go straight from your Mac to the provider you picked.
+            </p>
+          </article>
+          <article>
+            <h3>Follow-ups and history</h3>
+            <p>
+              Press Return to keep the thread going. Everything you've asked stays in the list
+              underneath, so old answers work as a cheatsheet instead of vanishing.
+            </p>
+          </article>
+        </div>
+
+        <ul class="providers" aria-label="Supported providers">
+          <li>OpenAI</li>
+          <li>ChatGPT</li>
+          <li>Anthropic</li>
+          <li>Claude</li>
+          <li>OpenRouter</li>
+          <li>Ollama</li>
+        </ul>
+      </section>
+
+      <section class="section wrap" id="install">
+        <h2>Install</h2>
+        <div class="ways">
+          <div>
+            <h3>Download the app</h3>
+            <p>Signed and notarized DMG. Drag PingAsk to Applications and press your shortcut.</p>
+            <a
+              class="btn btn-ghost"
+              id="download2"
+              href="https://github.com/tanlethanh/pingask/releases/latest"
+              >Download DMG</a
+            >
+          </div>
+          <div>
+            <h3>Or one line in a terminal</h3>
+            <p>
+              Fetches the latest release, installs it to <code>/Applications</code> and tells you
+              the shortcut.
+            </p>
+            <pre><code>curl -fsSL pingask.app/install.sh | sh</code></pre>
+          </div>
+        </div>
+        <p class="fine">
+          Requires macOS 11 or later. Updates arrive in-app. Read the
+          <a href="https://github.com/tanlethanh/pingask/blob/main/landing/public/install.sh"
+            >install script</a
+          >
+          before you run it. You always should.
+        </p>
+      </section>
+
+      <section class="section wrap" id="faq">
+        <h2>Common questions</h2>
+        <div class="faq">
+          <details>
+            <summary>Is PingAsk free?</summary>
+            <p>
+              Yes. MIT licensed, no subscription. You pay your model provider directly, or nothing
+              at all when you run local models through Ollama.
+            </p>
+          </details>
+          <details>
+            <summary>Which models can I use?</summary>
+            <p>
+              OpenAI and Anthropic with an API key, ChatGPT and Claude with the subscription you
+              already have, anything on OpenRouter, and any local model in Ollama.
+            </p>
+          </details>
+          <details>
+            <summary>Does it send my data anywhere?</summary>
+            <p>
+              Only to the provider you choose. There is no PingAsk server, no account and no
+              analytics. Keys and threads stay on your Mac.
+            </p>
+          </details>
+          <details>
+            <summary>How is this different from Raycast AI or the ChatGPT app?</summary>
+            <p>
+              PingAsk does one thing: ask and answer, with your own key instead of a Pro plan, in a
+              few thousand lines you can read. No extension store, no launcher platform.
+            </p>
+          </details>
+          <details>
+            <summary>Windows or Linux?</summary>
+            <p>macOS only for now. The app is Tauri, so a port is possible; it is not built yet.</p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap foot-in">
+        <span>PingAsk. Quick ask, quick answer.</span>
+        <span>
+          <a href="https://github.com/tanlethanh/pingask">Source</a>
+          <a href="https://github.com/tanlethanh/pingask/releases">Releases</a>
+          <a href="https://github.com/tanlethanh/pingask/blob/main/LICENSE">MIT</a>
+        </span>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
