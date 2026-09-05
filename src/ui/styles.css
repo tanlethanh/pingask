@@ -1,5 +1,5 @@
 /*
- * Pingask v2 — the whole visual system.
+ * PingAsk v2 — the whole visual system.
  *
  * The native window is transparent, undecorated and 620px wide (see
  * src-tauri/tauri.conf.json), so this file paints the panel itself: rounded
@@ -995,13 +995,14 @@ input:not(.pa-input, .pa-provider-input):focus-visible {
   /* Fixed-width digits, so 0.1.9 to 0.2.0 does not shift the button beside it. */
   font-variant-numeric: tabular-nums;
   /*
-   * Optical, not geometric. `align-items: center` centres the text's em box, which
-   * leaves the ink of "Pingask" — the g's descender included — measuring 1.07px lower
-   * than the power glyph's ink beside it, while the cap heights land within 0.2px.
-   * Half of that difference is where the word stops reading as low, and on a 2x
-   * display it is exactly one device pixel.
+   * Optical, not geometric, and hand-set. `align-items: center` centres the text's em
+   * box, which measures the ink of "PingAsk" — the g's descender included — 1.07px
+   * lower than the power glyph's ink beside it; the value below is the one that looks
+   * right against it, which is not the same number. The single knob: negative lifts the
+   * label, positive drops it.
    */
-  transform: translateY(-0.5px);
+  --pa-version-nudge: 1px;
+  transform: translateY(var(--pa-version-nudge));
 }
 
 .pa-icon-btn--lg {
