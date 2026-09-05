@@ -28,10 +28,13 @@ case "$(uname -m)" in
 esac
 
 info "Looking up the latest release…"
-URL=$(curl -fsSL "$API" |
-  grep -o "https://[^\"]*_${ARCH}\.dmg" |
-  head -n 1) || die "could not reach the GitHub API."
-[ -n "$URL" ] || die "no ${ARCH} DMG in the latest release. See https://github.com/$REPO/releases"
+RELEASE=$(curl -fsSL "$API") || die "could not reach the GitHub API."
+
+# Releases ship one universal DMG. The per-arch lookup stays as a fallback in case a
+# future build splits them again.
+URL=$(printf '%s' "$RELEASE" | grep -o 'https://[^"]*_universal\.dmg' | head -n 1)
+[ -n "$URL" ] || URL=$(printf '%s' "$RELEASE" | grep -o "https://[^\"]*_${ARCH}\.dmg" | head -n 1)
+[ -n "$URL" ] || die "no macOS DMG in the latest release. See https://github.com/$REPO/releases"
 
 TMP=$(mktemp -d)
 MNT=""

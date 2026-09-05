@@ -42,8 +42,11 @@ if (copy) {
   if (!res?.ok) return
 
   const { tag_name: tag, assets = [] } = await res.json()
-  const arm = dmgFor(assets, 'aarch64')
-  const intel = dmgFor(assets, 'x64')
+  // Releases ship one universal DMG; the per-arch lookups stay as a fallback in case a
+  // future build splits them again.
+  const universal = dmgFor(assets, 'universal')
+  const arm = universal ?? dmgFor(assets, 'aarch64')
+  const intel = universal ?? dmgFor(assets, 'x64')
   const preferred = (isAppleSilicon() ? arm : intel) ?? arm ?? intel
   if (!preferred) return
 
@@ -55,8 +58,9 @@ if (copy) {
   const other = preferred === arm ? intel : arm
   const meta = document.getElementById('dlmeta')
   if (!meta) return
-  meta.textContent = `${tag ? `${tag} · ` : ''}${preferred === arm ? 'Apple Silicon' : 'Intel'} · macOS 11+ · free, MIT`
-  if (other) {
+  const label = universal ? 'Apple Silicon & Intel' : preferred === arm ? 'Apple Silicon' : 'Intel'
+  meta.textContent = `${tag ? `${tag} · ` : ''}${label} · macOS 11+ · free, MIT`
+  if (other && other !== preferred) {
     meta.insertAdjacentHTML(
       'beforeend',
       ` · <a href="${other}">${preferred === arm ? 'Intel' : 'Apple Silicon'} build</a>`,
