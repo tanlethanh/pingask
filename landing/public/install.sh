@@ -58,7 +58,7 @@ APP=$(find "$MNT" -maxdepth 1 -name "*.app" -print -quit)
 # A running copy cannot be replaced in place.
 pkill -x PingAsk >/dev/null 2>&1 || true
 
-info "Installing to $APPS…"
+info "Installing to ${APPS}…"
 rm -rf "$APPS/$(basename "$APP")"
 if ! ditto "$APP" "$APPS/$(basename "$APP")" 2>/dev/null; then
   info "Needs your password to write to $APPS."
