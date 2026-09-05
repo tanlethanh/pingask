@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Accessory app: no Dock tile, no menu bar of its own. Pingask is reached by
+    the global hotkey, the way Raycast and Spotlight are. Tauri merges this file
+    into the generated bundle Info.plist, so this stays a zero-Rust change
+    (PLAN.md decision #2).
+
+    Only applies to a bundled .app. `tauri dev` runs the bare binary in
+    src-tauri/target/debug/, which has no Info.plist and still takes a Dock tile.
+  -->
+  <key>LSUIElement</key>
+  <true/>
+</dict>
+</plist>

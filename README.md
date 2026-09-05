@@ -1,15 +1,9 @@
 # Pingask
 
-A quick-ask AI assistant for your desktop. No hassle, just ask.
+A macOS Spotlight-style panel for quickly asking a question. Press shortcut, type question, get an answer, follow up, or browse threads like a cheatsheet.
 
-## What is it?
+Local, no backend or telemetry. Use your own API keys or connect your ChatGPT/Claude subscription. Supports OpenAI, Anthropic, OpenRouter and Ollama.
 
-Pingask is a lightweight desktop app that lets you quickly ask questions and get instant AI-powered answers. Think of it as your personal AI cheatsheet, always just a keystroke away.
+## License
 
-## Usage
-
-1. Press the keyboard shortcut to open Pingask
-2. Type your question (e.g., "Neovim jump to line")
-3. Get a short, helpful answer immediately
-
-Perfect for quick lookups, command references, and coding tips.
+MIT

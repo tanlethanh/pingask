@@ -1,0 +1,1783 @@
+/*
+ * Pingask v2 — the whole visual system.
+ *
+ * The native window is transparent, undecorated and 620px wide (see
+ * src-tauri/tauri.conf.json), so this file paints the panel itself: rounded
+ * background, hairline border, shadow. Everything is a custom property on
+ * :root so a theme swap is one block, not a rewrite.
+ *
+ * Class prefix `pa-` keeps app chrome from colliding with markdown output,
+ * which is styled only under `.pa-md`.
+ */
+
+/* ---------------------------------------------------------------- tokens */
+
+:root {
+  color-scheme: light dark;
+
+  --pa-width: 620px;
+  /* Top chrome and bottom rail. The query field and the settings header are different
+     elements, so pinning both to one token is what keeps the content from jumping
+     between pages — and the same for the rail. */
+  --pa-head-h: 56px;
+  --pa-foot-h: 42px;
+  --pa-max-height: 640px;
+
+  /* Matches windowEffects.radius in tauri.conf.json — the native material is
+     rounded by AppKit, so a different CSS radius would show a seam. */
+  /* A history row is a fixed height by construction, which lets the panel reserve space
+     for N rows in CSS with no DOM measuring. Keep both in sync with .pa-list-item. */
+  --pa-row-h: 53px;
+  --pa-list-pad: 6px;
+
+  --pa-radius: 20px;
+  --pa-radius-md: 10px;
+  --pa-radius-sm: 6px;
+
+  /* The whole type scale. Five steps, each with a job: the query field, a pane heading,
+     anything you read, anything you glance at, and list labels. */
+  --pa-text-display: 21px;
+  /* Its own step because --pa-text-title doubles as the body size for answers: growing
+     that to enlarge one heading would enlarge every reply. */
+  --pa-text-heading: 18px;
+  --pa-text-title: 15px;
+  --pa-text-body: 14px;
+  --pa-text-small: 12.5px;
+  --pa-text-micro: 10.5px;
+
+  /* Leading for the two sizes that need a fixed line box. Tokens rather than literals
+     because --pa-row-h is derived from them, and the reserved list height from that. */
+  --pa-lead-body: 19px;
+  --pa-lead-small: 17px;
+
+  --pa-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --pa-mono: "SF Mono", ui-monospace, Menlo, Monaco, "Cascadia Code", monospace;
+
+  /* Critically damped, no overshoot — the house default. Bounce is reserved for
+     motion the user's own gesture put in flight, and nothing here is draggable. */
+  --pa-dur-fast: 100ms;
+  --pa-dur: 180ms;
+  --pa-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Mirror of --pa-ease, for the return leg of a reversible transition. */
+  --pa-ease-out: cubic-bezier(1, 0, 0.68, 0.28);
+
+  /* Overridden to the live system accent below, where the engine supports it. */
+  --pa-on-accent: #fff;
+
+  /* Light — the default. Dark overrides only the values below. */
+  /*
+   * The panel's ground: a tinted sheet of glass rather than a solid card. The alpha is
+   * low enough that the wallpaper is a real presence, and the CSS blur runs on top of the
+   * native hudWindow material, which keeps text legible over anything. Lower the alpha
+   * toward 0.6 to let more of the wallpaper through.
+   */
+  --pa-panel-bg: rgba(247, 247, 250, 0.88);
+  --pa-panel-blur: blur(30px);
+  --pa-border: rgba(0, 0, 0, 0.12);
+  --pa-hairline: rgba(0, 0, 0, 0.07);
+  /* The bright edge where light catches the top rim of a real material. */
+  --pa-rim-light: rgba(255, 255, 255, 0.7);
+
+  --pa-text: rgba(0, 0, 0, 0.9);
+  --pa-text-2: rgba(0, 0, 0, 0.6);
+  --pa-text-3: rgba(0, 0, 0, 0.42);
+  --pa-text-4: rgba(0, 0, 0, 0.26);
+
+  /*
+   * The same ramp, opaque, for icons.
+   *
+   * On a translucent panel, --pa-text-3/-4 composite against the *wallpaper*: a 2px
+   * stroke is thin enough that the desktop reads straight through it, so the same icon is
+   * a different grey on every background. Body text has the mass to survive that; a
+   * hairline glyph does not.
+   *
+   * These are the same stops flattened onto the panel's own colour. --pa-ink and
+   * --pa-surface are the two opaque ends, and the contrast and transparency overrides
+   * below only restate those two, because a custom property re-resolves with its inputs.
+   * --pa-text needs no opaque stop: at 90% the ground contributes a tenth of the colour.
+   */
+  --pa-ink: #000;
+  --pa-surface: #f7f7fa;
+  --pa-icon-2: color-mix(in srgb, var(--pa-ink) 62%, var(--pa-surface));
+  --pa-icon-3: color-mix(in srgb, var(--pa-ink) 42%, var(--pa-surface));
+  --pa-icon-4: color-mix(in srgb, var(--pa-ink) 26%, var(--pa-surface));
+
+  --pa-fill: rgba(0, 0, 0, 0.045);
+  --pa-fill-hover: rgba(0, 0, 0, 0.07);
+  --pa-fill-active: rgba(0, 0, 0, 0.1);
+  /* Selection is a neutral lift, the way every macOS list does it. */
+  --pa-selected: rgba(0, 0, 0, 0.075);
+
+  --pa-accent: #0a63d6;
+  --pa-accent-soft: rgba(10, 99, 214, 0.12);
+  /*
+   * The focus ring, and only the focus ring. Neutral rather than the accent: the accent
+   * is reserved for links, the primary button and the on-state of a control, and a ring
+   * in the same colour made a merely focused control read as an actionable one. Derived
+   * from --pa-text, so it follows the light/dark swap without a second declaration.
+   */
+  --pa-focus: color-mix(in srgb, var(--pa-text) 55%, transparent);
+  --pa-danger: #c9333c;
+  --pa-danger-soft: rgba(201, 51, 60, 0.1);
+  --pa-warning: #a06000;
+  --pa-warning-soft: rgba(160, 96, 0, 0.12);
+  --pa-success: #167a4a;
+
+  --pa-code-bg: rgba(0, 0, 0, 0.055);
+  --pa-code-block-bg: rgba(0, 0, 0, 0.04);
+  --pa-code-block-border: rgba(0, 0, 0, 0.07);
+
+  --pa-kbd-bg: rgba(0, 0, 0, 0.07);
+  --pa-kbd-border: rgba(0, 0, 0, 0.16);
+
+  --pa-scroll-thumb: rgba(0, 0, 0, 0.18);
+  --pa-scroll-thumb-hover: rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pa-panel-bg: rgba(25, 25, 25, 0.88);
+    --pa-panel-blur: blur(30px);
+    --pa-border: rgba(255, 255, 255, 0.05);
+    --pa-hairline: rgba(255, 255, 255, 0.07);
+    --pa-rim-light: rgba(255, 255, 255, 0.1);
+
+    --pa-text: rgba(255, 255, 255, 0.93);
+    --pa-text-2: rgba(255, 255, 255, 0.62);
+    --pa-text-3: rgba(255, 255, 255, 0.42);
+    --pa-text-4: rgba(255, 255, 255, 0.26);
+
+    /* The two ends of the icon ramp; the three stops above them follow. */
+    --pa-ink: #fff;
+    --pa-surface: #191919;
+
+    --pa-fill: rgba(255, 255, 255, 0.06);
+    --pa-fill-hover: rgba(255, 255, 255, 0.1);
+    --pa-fill-active: rgba(255, 255, 255, 0.14);
+    --pa-selected: rgba(255, 255, 255, 0.1);
+
+    --pa-accent: #4c9dff;
+    --pa-accent-soft: rgba(76, 157, 255, 0.16);
+    --pa-danger: #ff6b6b;
+    --pa-danger-soft: rgba(255, 107, 107, 0.13);
+    --pa-warning: #ff9f0a;
+    --pa-warning-soft: rgba(255, 159, 10, 0.14);
+    --pa-success: #4ad48a;
+
+    --pa-code-bg: rgba(255, 255, 255, 0.08);
+    --pa-code-block-bg: rgba(0, 0, 0, 0.32);
+    --pa-code-block-border: rgba(255, 255, 255, 0.07);
+
+    --pa-kbd-bg: rgba(255, 255, 255, 0.1);
+    --pa-kbd-border: rgba(255, 255, 255, 0.16);
+
+    --pa-scroll-thumb: rgba(255, 255, 255, 0.18);
+    --pa-scroll-thumb-hover: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/*
+ * macOS users pick their own accent colour in System Settings, and native apps
+ * follow it. AccentColor/AccentColorText are the CSS system colours that expose
+ * it; the literals above stay as the fallback for engines without them.
+ */
+@supports (color: AccentColor) {
+  :root {
+    --pa-accent: AccentColor;
+    --pa-on-accent: AccentColorText;
+  }
+}
+
+/* ----------------------------------------------------------------- reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--pa-font);
+  font-size: var(--pa-text-title);
+  line-height: 1.5;
+  color: var(--pa-text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  cursor: default;
+  user-select: none;
+}
+
+#root {
+  height: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/*
+ * A drawn scrollbar on every pane that scrolls. The OS overlay bar is ~10px of
+ * near-solid grey, which over rows this size is a stripe down the panel rather than a
+ * position indicator. The recents list avoids paying 7px of every row for it with
+ * `overflow: overlay` — see .pa-list.
+ */
+:is(.pa-transcript, .pa-settings-scroll, .pa-list, .pa-md pre) {
+  &::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--pa-scroll-thumb);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--pa-scroll-thumb-hover);
+  }
+}
+
+/* ----------------------------------------------------------------- pages */
+
+/*
+ * One block per page, and the page is the only thing that sets its own height.
+ *
+ * Each overrides --pa-max-height rather than max-height, so everything derived from the
+ * cap — the listbox's reserved height, for one — follows without knowing which page it
+ * is on. The :root value stays the default for anything rendered outside a page.
+ */
+.pa-panel--launcher {
+  /* Shorter on purpose: 640 is sized for content you sit and read, and a list of
+     one-line rows filling it made the window a wall. 400 leaves five rows and the top of
+     a sixth, so the cut row says the rest are a scroll away. */
+  --pa-max-height: 400px;
+}
+
+.pa-panel--thread {
+  --pa-max-height: 640px;
+}
+
+.pa-panel--settings {
+  --pa-max-height: 640px;
+}
+
+/* ----------------------------------------------------------------- panel */
+
+.pa-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: var(--pa-max-height);
+  overflow: hidden;
+  border-radius: var(--pa-radius);
+  background: var(--pa-panel-bg);
+  -webkit-backdrop-filter: var(--pa-panel-blur);
+  backdrop-filter: var(--pa-panel-blur);
+  /*
+   * No drop shadow here: AppKit draws the window's own shadow around the native
+   * material (tauri.conf.json `shadow: true`), and a CSS one would sit inside the
+   * window and read as a second, misaligned edge.
+   *
+   * The two inset rings are the light-catching top edge of a real material: a
+   * bright hairline just inside the rim, and the rim itself.
+   */
+  box-shadow:
+    inset 0 0.5px 0 0 var(--pa-rim-light),
+    inset 0 0 0 0.5px var(--pa-border);
+  isolation: isolate;
+}
+
+.pa-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-height: var(--pa-head-h);
+}
+
+.pa-header--divided {
+  border-bottom: 0.5px solid var(--pa-hairline);
+}
+
+.pa-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pa-footer-slot {
+  flex: 0 0 auto;
+  /* No fill of its own: the hairline is what separates the rail from the body.
+     A second coat of the panel ground composited to a denser strip, which read
+     as a different surface rather than the same sheet. */
+  border-top: 0.5px solid var(--pa-hairline);
+}
+
+/* ----------------------------------------------------------------- input */
+
+.pa-input-form {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.pa-input {
+  width: 100%;
+  padding: 13px 20px;
+  font-size: var(--pa-text-display);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.022em;
+  font-optical-sizing: auto;
+  color: var(--pa-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  user-select: text;
+  -webkit-user-modify: read-write-plaintext-only;
+}
+
+.pa-input::placeholder {
+  /* text-4 disappears against the HUD material — the placeholder is the panel's
+     only content when idle, so it has to hold its own. */
+  color: var(--pa-text-3);
+}
+
+.pa-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------ transcript */
+
+.pa-transcript {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+.pa-transcript-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 20px 18px;
+}
+
+/* --------------------------------------------------------------- message */
+
+.pa-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  user-select: text;
+}
+
+.pa-msg--user .pa-msg-text {
+  font-size: var(--pa-text-body);
+  line-height: 1.45;
+  color: var(--pa-text-2);
+  padding-left: 10px;
+  border-left: 2px solid var(--pa-hairline);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pa-msg--assistant .pa-md {
+  font-size: var(--pa-text-title);
+  line-height: 1.6;
+  color: var(--pa-text);
+}
+
+.pa-msg--error .pa-msg-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: var(--pa-text-body);
+  line-height: 1.45;
+  color: var(--pa-danger);
+  background: var(--pa-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--pa-danger) 22%, transparent);
+  border-radius: var(--pa-radius-sm);
+  overflow-wrap: anywhere;
+}
+
+.pa-msg-error-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.pa-msg-error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/*
+ * Held one step back from the sentence above it: same red, less of it, and a mono face,
+ * so the eye reads the explanation first and finds the evidence only when it wants it.
+ * Scrolls on its own rather than stretching the panel — a stack trace must not decide
+ * how tall the window is.
+ */
+.pa-error-detail {
+  margin: 0;
+  max-height: 128px;
+  overflow: auto;
+  padding: 6px 8px;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    SF Mono,
+    Menlo,
+    monospace;
+  font-size: var(--pa-text-micro);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: color-mix(in srgb, var(--pa-danger) 78%, transparent);
+  background: color-mix(in srgb, var(--pa-danger) 8%, transparent);
+  border-radius: var(--pa-radius-sm);
+  user-select: text;
+}
+
+.pa-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--pa-accent);
+  border-radius: 1px;
+  animation: pa-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes pa-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.pa-thinking {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: var(--pa-text-body);
+  color: var(--pa-text-3);
+}
+
+.pa-spinner {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--pa-fill-active);
+  border-top-color: var(--pa-icon-3);
+  border-radius: 50%;
+  animation: pa-spin 0.62s linear infinite;
+}
+
+@keyframes pa-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* -------------------------------------------------------------- markdown */
+
+.pa-md > *:first-child {
+  margin-top: 0;
+}
+
+.pa-md > *:last-child {
+  margin-bottom: 0;
+}
+
+.pa-md p {
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+
+.pa-md h1,
+.pa-md h2,
+.pa-md h3,
+.pa-md h4,
+.pa-md h5,
+.pa-md h6 {
+  margin: 16px 0 7px;
+  font-size: var(--pa-text-title);
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  color: var(--pa-text);
+}
+
+.pa-md ul,
+.pa-md ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.pa-md li {
+  margin: 3px 0;
+}
+
+.pa-md li > p {
+  margin: 0;
+}
+
+.pa-md strong {
+  font-weight: 600;
+}
+
+.pa-md a {
+  color: var(--pa-accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--pa-accent) 35%, transparent);
+  cursor: pointer;
+}
+
+.pa-md a:hover {
+  border-bottom-color: var(--pa-accent);
+}
+
+.pa-md blockquote {
+  margin: 10px 0;
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid var(--pa-hairline);
+  color: var(--pa-text-2);
+}
+
+.pa-md hr {
+  margin: 14px 0;
+  border: none;
+  border-top: 1px solid var(--pa-hairline);
+}
+
+.pa-md code {
+  padding: 2px 5px;
+  font-family: var(--pa-mono);
+  font-size: 0.86em;
+  background: var(--pa-code-bg);
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+
+/* Most answers are commands: tight blocks, no wasted vertical space. */
+.pa-md pre {
+  margin: 9px 0;
+  padding: 9px 11px;
+  overflow-x: auto;
+  background: var(--pa-code-block-bg);
+  border: 1px solid var(--pa-code-block-border);
+  border-radius: var(--pa-radius-sm);
+}
+
+.pa-md pre code {
+  display: block;
+  padding: 0;
+  font-size: var(--pa-text-body);
+  line-height: 1.45;
+  white-space: pre;
+  overflow-wrap: normal;
+  background: none;
+  border-radius: 0;
+}
+
+.pa-md table {
+  margin: 10px 0;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pa-text-body);
+}
+
+.pa-md th,
+.pa-md td {
+  padding: 5px 9px;
+  text-align: left;
+  border: 1px solid var(--pa-hairline);
+}
+
+.pa-md th {
+  font-weight: 600;
+  background: var(--pa-fill);
+}
+
+/*
+ * Wrapper around the recents/search list. Carries the reserved height that keeps the
+ * panel from resizing on every keystroke while the query narrows the results;
+ * pages/launcher.tsx sets it inline from the idle list.
+ */
+.pa-listbox {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/*
+ * While the user is narrowing the list, hold the height the idle list occupied.
+ * Without this the OS window resizes on every keystroke: the panel jitters under
+ * a fast typist and rows slide out from under the pointer.
+ *
+ * `--pa-rows` is set inline by pages/launcher.tsx: the rows the idle list shows.
+ */
+.pa-listbox[data-reserve] {
+  /*
+   * Clamped to the room the panel actually has. Holding 25 rows open would push the
+   * body past --pa-max-height, and .pa-body hides its overflow — the reserve meant to
+   * stop the panel jittering would have cut the bottom rows off instead.
+   */
+  min-height: min(
+    calc(var(--pa-list-pad) * 2 + var(--pa-rows, 0) * var(--pa-row-h)),
+    calc(var(--pa-max-height) - var(--pa-head-h) - var(--pa-foot-h))
+  );
+}
+
+/* ------------------------------------------------------------------ list */
+
+.pa-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Vertical padding stays 6px: --pa-list-pad feeds the reserved-height arithmetic. */
+  padding: 6px 8px;
+}
+
+/*
+ * The bar floats over the rows instead of taking a column out of them. `overlay` is
+ * WebKit's own non-standard value, so it is asked for behind @supports and the plain
+ * `auto` above stands if it is ever dropped.
+ *
+ * The transcript does not need this: its text is already inset from the edge, so a bar
+ * in the gutter costs it nothing. A row here runs the full width of the card.
+ */
+@supports (overflow-y: overlay) {
+  .pa-list {
+    overflow-y: overlay;
+  }
+}
+
+.pa-list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--pa-radius-md);
+  transition: background var(--pa-dur-fast) var(--pa-ease);
+}
+
+.pa-list-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/*
+ * Hover is the pointer's cursor, and it goes quiet while the keyboard has its own —
+ * history-list.tsx sets data-keys on an arrow press and clears it on the next real
+ * pointer move. Every hover rule on a row is gated the same way.
+ *
+ * The gate lives in :where() so it adds no specificity: plain .pa-list-item:hover and
+ * .pa-list-item.is-selected are level, and the selected fill winning on a row that is
+ * both is only source order. A gate that counted would have quietly reversed that.
+ */
+:where(.pa-list:not([data-keys])) .pa-list-item:hover {
+  background: var(--pa-fill);
+}
+
+/* Pressing a row previews the selection it is about to become. Instant: the
+   highlight belongs to the press, not to the release. */
+.pa-list-item:active {
+  background: var(--pa-fill-active);
+  transition-duration: 0s;
+}
+
+/* Neutral, not the accent: a tinted row claims more attention than a cursor position
+   deserves, and fights the system accent when the user's is not blue. ~10% white lift,
+   which is what Raycast measures at. */
+.pa-list-item.is-selected {
+  background: var(--pa-selected);
+}
+
+/*
+ * Set for the one style flush where arrowing past the edge scrolls the list. The rows
+ * move under the highlight in that frame, and a row that fades in over 100ms while it
+ * is travelling arrives unlit — the scroll and the selection read as two events instead
+ * of one. See the layout effect in history-list.tsx, which is what puts this on and
+ * takes it straight back off.
+ */
+.pa-list[data-snap] .pa-list-item {
+  transition: none;
+}
+
+.pa-list-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+}
+
+.pa-list-title {
+  display: block;
+  font-size: var(--pa-text-body);
+  line-height: var(--pa-lead-body);
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  color: var(--pa-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-list-preview {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--pa-text-small);
+  line-height: var(--pa-lead-small);
+  letter-spacing: 0.004em;
+  color: var(--pa-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-list-meta {
+  flex: 0 0 auto;
+  font-size: var(--pa-text-small);
+  color: var(--pa-text-4);
+  font-variant-numeric: tabular-nums;
+  /* Both halves of the swap shrink toward the edge they share, so the pair reads as one
+     control changing rather than two things overlapping. */
+  transform-origin: right center;
+  /*
+   * The return leg. Delayed: the age waits for the X to clear before coming back, the
+   * mirror of the X waiting for the age on the way in.
+   */
+  transition:
+    opacity var(--pa-dur-fast) var(--pa-ease) 50ms,
+    transform var(--pa-dur-fast) var(--pa-ease) 50ms;
+}
+
+/* The age gives way to the delete button: out first, in second, so the row never shows
+   both. A straight crossfade left the two stacked at half opacity, which at this size is
+   a smudge rather than a transition. */
+:where(.pa-list:not([data-keys])) .pa-list-item:hover .pa-list-meta {
+  opacity: 0;
+  transform: scale(0.92);
+  transition-delay: 0s;
+}
+
+/* The selected row lifts its title slightly; everything else keeps the normal palette. */
+.pa-list-item.is-selected .pa-list-title {
+  color: var(--pa-text);
+}
+
+/*
+ * Tab rings the row, not the button inside it.
+ *
+ * The row is the thing on screen — it carries the padding, the hover fill and the
+ * corner radius — while .pa-list-main is a hit target inset from all four sides and
+ * square-cornered. A ring on the button drew a hard-cornered box floating inside a
+ * rounded row, which read as a second, smaller object rather than as this row.
+ */
+.pa-list-main:focus-visible {
+  outline: none;
+}
+
+.pa-list-item:has(.pa-list-main:focus-visible) {
+  outline: 2px solid var(--pa-focus);
+  outline-offset: 1px;
+}
+
+/*
+ * A notice, not content. `pointer-events: none` because a drag that starts in the query
+ * field above was extending its selection down into this line and painting it blue —
+ * the body's `user-select: none` does not stop a selection that began in a field that
+ * allows one. Nothing here is clickable, so the row has no reason to take the pointer.
+ */
+.pa-empty {
+  /* Takes the whole box, so the line is centred in whatever room the panel has. */
+  flex: 1 1 auto;
+  /* Two rows plus the list's padding: sized to its own the notice was a 66px strip, and
+     the panel snapping down to it read as the window having collapsed. */
+  min-height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 22px 20px;
+  text-align: center;
+  /* A step up from body text: it is the only thing on screen when it shows. */
+  font-size: var(--pa-text-heading);
+  color: var(--pa-text-4);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.pa-icon-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--pa-icon-4);
+  border-radius: var(--pa-radius-sm);
+  transition:
+    background var(--pa-dur-fast) var(--pa-ease),
+    color var(--pa-dur-fast) var(--pa-ease),
+    opacity var(--pa-dur-fast) var(--pa-ease);
+}
+
+.pa-icon-btn:hover {
+  background: var(--pa-fill-hover);
+  color: var(--pa-icon-2);
+}
+
+.pa-icon-btn:active {
+  background: var(--pa-fill-active);
+}
+
+/*
+ * Delete is a pointer affordance, hidden until the pointer is on its row — the keyboard
+ * route is ⌘⌫ on the highlighted row (pages/launcher.tsx), which is why the button is out
+ * of the tab order and has no focus state here.
+ *
+ * Out of flow, so a hidden button costs no width: in the row it held a 24px column open
+ * on every line. It lands on the age instead, which fades out for it.
+ */
+.pa-list-item .pa-icon-btn {
+  position: absolute;
+  /* Matches .pa-list-item's own right padding, so it ends where the age it covers did. */
+  right: 10px;
+  top: 50%;
+  /* Scaled from the same edge as the age, and only slightly: this is a hover on a row
+     the user passes over constantly, so the motion has to be felt more than seen. */
+  transform: translateY(-50%) scale(0.86);
+  transform-origin: right center;
+  opacity: 0;
+  /* Redeclared rather than inherited from .pa-icon-btn: transform joins the set, and
+     the outgoing leg keeps its own timing. Delays are per-property, in this order. */
+  transition:
+    background var(--pa-dur-fast) var(--pa-ease),
+    color var(--pa-dur-fast) var(--pa-ease),
+    opacity var(--pa-dur-fast) var(--pa-ease),
+    transform var(--pa-dur) var(--pa-ease);
+}
+
+:where(.pa-list:not([data-keys])) .pa-list-item:hover .pa-icon-btn {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  /* Only the swap waits for the age to go; the button's own hover fill does not. */
+  transition-delay: 0s, 0s, 50ms, 50ms;
+}
+
+/*
+ * The query field is deliberately excluded. It is the panel's only text input and
+ * it is focused from the moment the window opens, so a ring would be permanent
+ * chrome — and being full-bleed and borderless, its ring clips into a hard accent
+ * line across the panel. Spotlight shows no ring on its field either; the caret
+ * is the focus indicator.
+ */
+:where(button, select, [tabindex]):focus-visible,
+input:not(.pa-input, .pa-provider-input):focus-visible {
+  outline: 2px solid var(--pa-focus);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------- footer */
+
+.pa-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--pa-foot-h);
+  padding: 4px 10px 4px 16px;
+}
+
+.pa-hints {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pa-hint {
+  display: inline-flex;
+  align-items: center;
+  /* Cap-to-cap and cap-to-label, matched to .pa-chord. */
+  gap: 4px;
+  font-size: var(--pa-text-small);
+  /* Small text wants slightly positive tracking; large text wants negative.
+     One letter-spacing for every size is wrong somewhere. */
+  letter-spacing: 0.005em;
+  font-weight: 450;
+  color: var(--pa-text-3);
+  white-space: nowrap;
+}
+
+.pa-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.pa-model {
+  max-width: 190px;
+  font-size: var(--pa-text-small);
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  color: var(--pa-text-4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-model--warning {
+  color: var(--pa-warning);
+}
+
+/*
+ * The version, in the rail's chip slot beside the quit button. Sized and coloured like
+ * the model chip it stands in for, a shade lighter in weight — it is read once, not
+ * clicked.
+ */
+.pa-version {
+  font-size: var(--pa-text-small);
+  font-weight: 450;
+  letter-spacing: 0.005em;
+  color: var(--pa-text-4);
+  white-space: nowrap;
+  /* Fixed-width digits, so 0.1.9 to 0.2.0 does not shift the button beside it. */
+  font-variant-numeric: tabular-nums;
+  /*
+   * Optical, not geometric. `align-items: center` centres the text's em box, which
+   * leaves the ink of "Pingask" — the g's descender included — measuring 1.07px lower
+   * than the power glyph's ink beside it, while the cap heights land within 0.2px.
+   * Half of that difference is where the word stops reading as low, and on a 2x
+   * display it is exactly one device pixel.
+   */
+  transform: translateY(-0.5px);
+}
+
+.pa-icon-btn--lg {
+  width: 26px;
+  height: 26px;
+}
+
+/* The back control in the settings head, sized to match its heading. */
+.pa-icon-btn--back {
+  width: 30px;
+  height: 30px;
+  margin-left: -4px;
+  color: var(--pa-icon-2);
+}
+
+.pa-icon-btn--warning {
+  color: var(--pa-warning);
+  background: var(--pa-warning-soft);
+}
+
+.pa-icon-btn--warning:hover {
+  color: var(--pa-warning);
+  background: color-mix(in srgb, var(--pa-warning) 22%, transparent);
+}
+
+/* ------------------------------------------------------------------- kbd */
+
+.pa-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  font-family: var(--pa-font);
+  font-size: var(--pa-text-micro);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--pa-text-2);
+  background: var(--pa-kbd-bg);
+  border: 1px solid var(--pa-kbd-border);
+  border-radius: 4px;
+}
+
+/*
+ * The same key, one step larger, to sit inside a 38px settings row without setting
+ * the row's height. Size is the only thing that changes: padding, radius and border
+ * come from .pa-kbd, so the chord in the recorder and the chord in the footer are
+ * recognisably the same object.
+ */
+.pa-kbd--lg {
+  min-width: 21px;
+  height: 21px;
+  font-size: var(--pa-text-small);
+}
+
+/* -------------------------------------------------------------- settings */
+
+.pa-settings {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/*
+ * The panel's top edge in settings view, so it needs the same vertical presence as
+ * the query field it replaces and a hairline matching the rest of the chrome.
+ */
+.pa-settings-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--pa-head-h);
+  padding: 10px 14px;
+  border-bottom: 0.5px solid var(--pa-hairline);
+}
+
+.pa-settings-title {
+  font-size: var(--pa-text-heading);
+  font-weight: 600;
+  /* Larger text wants tighter tracking. */
+  letter-spacing: -0.016em;
+}
+
+.pa-settings-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px 18px;
+}
+
+.pa-section + .pa-section {
+  margin-top: 16px;
+}
+
+/* ---------------------------------------------------------------- group */
+
+/*
+ * A System Settings-style grouped card: label on the left, control on the right,
+ * rows separated by hairlines. Replaces three headed sections that each spent a
+ * line on a title and another on a hint.
+ */
+.pa-group {
+  margin-bottom: 16px;
+  background: var(--pa-fill);
+  border: 0.5px solid var(--pa-hairline);
+  border-radius: var(--pa-radius-md);
+  overflow: hidden;
+}
+
+/* One row height across both cards — the settings list and the provider list are
+   the same object, so they must measure the same. */
+.pa-group-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  padding: 5px 11px;
+}
+
+.pa-group-row + .pa-group-row {
+  border-top: 0.5px solid var(--pa-hairline);
+}
+
+label.pa-group-row {
+  cursor: pointer;
+}
+
+label.pa-group-row:has(.pa-toggle-input:disabled) {
+  cursor: default;
+}
+
+.pa-group-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+/* Settings uses three sizes and no more: 13px for anything you read, 11.5px for
+   anything you glance at, 14px once for the pane title. */
+.pa-group-label {
+  flex: 0 0 auto;
+  font-size: var(--pa-text-body);
+  line-height: var(--pa-lead-body);
+  font-weight: 400;
+  color: var(--pa-text);
+}
+
+.pa-group-sub {
+  font-size: var(--pa-text-small);
+  line-height: var(--pa-lead-small);
+  letter-spacing: 0.004em;
+  color: var(--pa-text-3);
+}
+
+/* The control side: right-aligned, never wider than it needs to be. */
+.pa-group-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.pa-section-label {
+  margin-bottom: 6px;
+  padding-left: 2px;
+  font-size: var(--pa-text-small);
+  font-weight: 500;
+  letter-spacing: 0.004em;
+  color: var(--pa-text-3);
+}
+
+/*
+ * A hint that appears and disappears with context — no reserved height, because it
+ * is absent far more often than present.
+ */
+.pa-inline-hint {
+  margin: 0 0 7px;
+  font-size: var(--pa-text-small);
+  line-height: var(--pa-lead-small);
+  letter-spacing: 0.004em;
+  color: var(--pa-text-3);
+}
+
+.pa-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 9px;
+  background: var(--pa-fill);
+  border: 1px solid var(--pa-hairline);
+  border-radius: var(--pa-radius-md);
+  transition:
+    background var(--pa-dur) var(--pa-ease),
+    border-color var(--pa-dur) var(--pa-ease);
+}
+
+.pa-field.is-recording {
+  background: var(--pa-danger-soft);
+  border-color: color-mix(in srgb, var(--pa-danger) 26%, transparent);
+}
+
+.pa-chord {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  /* Same cap-to-cap gap as .pa-hint in the footer — one chord spacing, so ⌥P in
+     the recorder and esc in the footer are set the same way. */
+  gap: 4px;
+  min-height: 21px;
+}
+
+.pa-chord-empty {
+  font-size: var(--pa-text-small);
+  color: var(--pa-text-4);
+}
+
+.pa-recording-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--pa-danger);
+  border-radius: 50%;
+  animation: pa-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pa-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.pa-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+ * A macOS pop-up button hugs its content; it does not stretch to fill the row. The
+ * old full-width control read as the heaviest thing in the pane while saying the
+ * least, so it is now sized to its label and capped.
+ */
+.pa-select {
+  max-width: 230px;
+  padding: 3px 24px 3px 8px;
+  font-size: var(--pa-text-body);
+  color: var(--pa-text);
+  background: var(--pa-fill);
+  border: 0.5px solid var(--pa-border);
+  border-radius: var(--pa-radius-sm);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The ring the base rule above suppresses. `.pa-select { outline: none }` ties with the
+ * global `select:focus-visible` on specificity and comes later, so without this the
+ * control was the one thing in the pane Tab could reach and not show.
+ *
+ * Pointer focus is excluded the way ModelSelect does it: :focus-visible matches a
+ * <select> after a plain click, so the ring stayed lit once the native popup closed.
+ */
+.pa-select:focus-visible:not([data-pointer]) {
+  outline: 2px solid var(--pa-focus);
+  outline-offset: 1px;
+}
+
+.pa-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pa-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * Both of the wrap's painted children sit over the control rather than beside it: the
+ * select is a real pop-up button and has to keep its full width for the menu to line up
+ * under it. The mark takes no clicks, so the whole field stays one target.
+ */
+.pa-select-wrap > .pa-select-mark {
+  position: absolute;
+  left: 8px;
+  color: var(--pa-text-2);
+  pointer-events: none;
+}
+
+/* Room for the mark, measured from it: 8px in, 14px wide, then the label's own 6px. */
+.pa-select--marked {
+  padding-left: 28px;
+}
+
+.pa-select-wrap > .pa-select-caret {
+  position: absolute;
+  right: 9px;
+  color: var(--pa-icon-3);
+  pointer-events: none;
+}
+
+.pa-text-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: var(--pa-text-body);
+  font-family: var(--pa-mono);
+  color: var(--pa-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  user-select: text;
+}
+
+.pa-text-input::placeholder {
+  font-family: var(--pa-font);
+  color: var(--pa-text-4);
+}
+
+/*
+ * One card, rows divided by hairlines — the same object as .pa-group. Six
+ * separately bordered cards with gaps between them was two container idioms in one
+ * pane, and it read as decoration rather than structure.
+ */
+.pa-providers {
+  display: flex;
+  flex-direction: column;
+  background: var(--pa-fill);
+  border: 0.5px solid var(--pa-hairline);
+  border-radius: var(--pa-radius-md);
+  overflow: hidden;
+}
+
+.pa-provider + .pa-provider {
+  border-top: 0.5px solid var(--pa-hairline);
+}
+
+/*
+ * A line, not a control. Nothing about the row is clickable any more — the actions on
+ * it are, and they say what they do.
+ */
+.pa-provider-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  /* 4px, not 5: a 30px action button plus 5px each side would be 40 and push the row
+     past its floor, leaving action rows taller than the ones without actions. */
+  padding: 4px 8px 4px 11px;
+}
+
+.pa-provider-state {
+  /* The row's one auto margin, so the value lands against the actions column. Free
+     space is split evenly between every auto margin on a line, so a second one — the
+     actions used to carry it too — parked this text mid-row instead. */
+  margin-left: auto;
+  font-size: var(--pa-text-small);
+  letter-spacing: 0.004em;
+  color: var(--pa-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pa-error {
+  margin-top: 12px;
+  padding: 8px 10px;
+  font-size: var(--pa-text-small);
+  color: var(--pa-danger);
+  background: var(--pa-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--pa-danger) 22%, transparent);
+  border-radius: var(--pa-radius-sm);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------- motion */
+
+.pa-fade-in {
+  animation: pa-fade-in var(--pa-dur) var(--pa-ease);
+}
+
+@keyframes pa-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-fade-in,
+  .pa-caret,
+  .pa-recording-dot {
+    animation: none;
+  }
+
+  .pa-caret {
+    opacity: 1;
+  }
+
+  .pa-spinner {
+    animation-duration: 1.6s;
+  }
+
+  .pa-transcript {
+    scroll-behavior: auto;
+  }
+
+  .pa-list-item,
+  .pa-icon-btn,
+  .pa-list-meta,
+  .pa-field,
+  .pa-md a {
+    transition: none;
+  }
+
+  /* With no transition left to carry it, the delete button's entrance scale would be a
+     jump between two sizes. It sits at full size and the swap becomes a cut. */
+  .pa-list-item .pa-icon-btn {
+    transform: translateY(-50%);
+  }
+}
+
+/*
+ * Accessibility: three independent system signals, three distinct answers.
+ *
+ * Reduced transparency does not mean "slightly less blur" — it means the
+ * material stops being a material. The panel goes opaque and the blur is
+ * dropped entirely, because a half-frosted surface is the worst of both.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --pa-panel-bg: #f2f2f4;
+    --pa-surface: #f2f2f4;
+    --pa-panel-blur: none;
+    --pa-rim-light: transparent;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --pa-panel-bg: #1e1e20;
+      --pa-surface: #1e1e20;
+    }
+  }
+
+  .pa-panel {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Increased contrast: near-solid ground and a border that is actually visible. */
+@media (prefers-contrast: more) {
+  :root {
+    --pa-panel-bg: #fff;
+    --pa-border: rgba(0, 0, 0, 0.65);
+    --pa-hairline: rgba(0, 0, 0, 0.35);
+    --pa-text-2: rgba(0, 0, 0, 0.82);
+    --pa-text-3: rgba(0, 0, 0, 0.66);
+    --pa-text-4: rgba(0, 0, 0, 0.5);
+
+    /* The stops move with the text ramp; --pa-ink and --pa-surface move under them. */
+    --pa-surface: #fff;
+    --pa-icon-2: color-mix(in srgb, var(--pa-ink) 82%, var(--pa-surface));
+    --pa-icon-3: color-mix(in srgb, var(--pa-ink) 66%, var(--pa-surface));
+    --pa-icon-4: color-mix(in srgb, var(--pa-ink) 50%, var(--pa-surface));
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --pa-panel-bg: #000;
+      --pa-border: rgba(255, 255, 255, 0.65);
+      --pa-hairline: rgba(255, 255, 255, 0.35);
+      --pa-text-2: rgba(255, 255, 255, 0.88);
+      --pa-text-3: rgba(255, 255, 255, 0.72);
+      --pa-text-4: rgba(255, 255, 255, 0.56);
+
+      --pa-surface: #000;
+      --pa-icon-2: color-mix(in srgb, var(--pa-ink) 88%, var(--pa-surface));
+      --pa-icon-3: color-mix(in srgb, var(--pa-ink) 72%, var(--pa-surface));
+      --pa-icon-4: color-mix(in srgb, var(--pa-ink) 56%, var(--pa-surface));
+    }
+  }
+
+  .pa-panel {
+    box-shadow: inset 0 0 0 1px var(--pa-border);
+  }
+}
+
+/* --------------------------------------------------------------- toggle */
+
+/* A macOS-shaped switch: the real checkbox stays in the DOM and keeps focus and
+   keyboard behaviour; only its painting is replaced. */
+.pa-toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pa-toggle-track {
+  flex: 0 0 auto;
+  position: relative;
+  width: 34px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 10px;
+  background: var(--pa-fill-active);
+  box-shadow: inset 0 0 0 0.5px var(--pa-hairline);
+  transition: background var(--pa-dur) var(--pa-ease);
+}
+
+.pa-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.28),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  transition: transform var(--pa-dur) var(--pa-ease);
+}
+
+.pa-toggle-input:checked + .pa-toggle-track {
+  background: var(--pa-accent);
+}
+
+.pa-toggle-input:checked + .pa-toggle-track .pa-toggle-knob {
+  transform: translateX(14px);
+}
+
+.pa-toggle-input:focus-visible + .pa-toggle-track {
+  outline: 2px solid var(--pa-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-toggle-track,
+  .pa-toggle-knob {
+    transition: none;
+  }
+}
+
+/*
+ * Group-row overrides live here, after the base .pa-select-wrap and .pa-field
+ * rules they narrow. Declared earlier they would still win on specificity, but the
+ * file would read as though they lose.
+ */
+.pa-group-control .pa-select-wrap {
+  min-width: 0;
+}
+
+.pa-group-control .pa-field {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.pa-provider-mark {
+  flex: 0 0 auto;
+  color: var(--pa-text-2);
+}
+
+/* ---------------------------------------------------------- model picker */
+
+/*
+ * The footer's model chip. Everything visible here is paint; the real control is a
+ * transparent <select> stretched over it, so the popup, keyboard access and type-ahead
+ * are the platform's. Painting it ourselves is what allows the provider mark, which a
+ * native option list cannot render.
+ */
+.pa-model-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 200px;
+  padding: 3px 6px;
+  border-radius: var(--pa-radius-sm);
+  font-size: var(--pa-text-small);
+  letter-spacing: 0.004em;
+  color: var(--pa-text-3);
+  transition:
+    background var(--pa-dur-fast) var(--pa-ease),
+    color var(--pa-dur-fast) var(--pa-ease);
+}
+
+.pa-model-picker:hover {
+  color: var(--pa-text-2);
+  background: var(--pa-fill);
+}
+
+.pa-model-picker:active {
+  background: var(--pa-fill-active);
+  transition-duration: 0s;
+}
+
+/*
+ * The select carries focus, but the chip is what the eye tracks.
+ *
+ * Excluded for pointer focus: :focus-visible matches a <select> after a plain click
+ * (it takes arrow keys once focused), so the ring stayed lit after the native popup
+ * closed. ModelSelect sets data-pointer for that case and clears it on any key.
+ */
+.pa-model-picker:has(.pa-model-select:focus-visible:not([data-pointer])) {
+  outline: 2px solid var(--pa-focus);
+  outline-offset: 1px;
+}
+
+.pa-model-mark {
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+
+.pa-model-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-model-caret {
+  flex: 0 0 auto;
+  opacity: 0.6;
+}
+
+.pa-model-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------- record */
+
+/*
+ * The shortcut recorder's control. No label and no container: the chord beside it
+ * already says what the row is, so a bordered pill reading "Record" was a second
+ * object competing with the keys it edits. Flat at rest, fill only on interaction.
+ */
+.pa-record {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  color: var(--pa-icon-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--pa-radius-sm);
+  transition:
+    color var(--pa-dur-fast) var(--pa-ease),
+    background var(--pa-dur-fast) var(--pa-ease);
+}
+
+.pa-record:hover:not(:disabled) {
+  color: var(--pa-text);
+  background: var(--pa-fill);
+}
+
+.pa-record:active:not(:disabled) {
+  background: var(--pa-fill-active);
+  transition-duration: 0s;
+}
+
+.pa-record:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Recording: the pulsing dot carries the state the word "Stop" used to. */
+.pa-record.is-recording {
+  color: var(--pa-danger);
+  background: var(--pa-danger-soft);
+}
+
+/*
+ * Inside a settings row the hint is a flex item beside the control, not a paragraph
+ * above it — its bottom margin pushed it off the row's centre line. Declared here,
+ * after the base rule it narrows.
+ */
+.pa-group-control .pa-inline-hint {
+  margin: 0;
+}
+
+/*
+ * The key field. Deliberately light: filling it with the panel ground read as a hole
+ * punched in the row rather than a field sitting in it. Its own border carries focus, and it is
+ * excluded from the global focus ring above — two indicators stacked was the problem.
+ */
+.pa-provider-input {
+  /* Grows into the row, but stops: full width reads as the row's subject rather than one
+     value on it, and a key is shown as bullets anyway. */
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 240px;
+  /* Stands in for .pa-provider-state's auto margin — the editing row has no state span,
+     and without it the field's right edge stops short of the actions column that every
+     other row's value ends at. */
+  margin-left: auto;
+  padding: 3px 7px;
+  font-size: var(--pa-text-small);
+  background: var(--pa-fill);
+  border: 0.5px solid var(--pa-hairline);
+  border-radius: var(--pa-radius-sm);
+  transition: border-color var(--pa-dur-fast) var(--pa-ease);
+}
+
+.pa-provider-input:focus {
+  border-color: color-mix(in srgb, var(--pa-accent) 70%, transparent);
+}
+
+/* The actions group carries its own tight gap and takes the row's spacing only on its
+   outside edge: with one gap across the row, the buttons' own padding made icon-to-icon
+   read wider than text-to-icon. */
+.pa-provider-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+  flex: 0 0 auto;
+  /* Sized by its own actions, not padded out to the widest row: reserving a fixed two
+     slots left a 30px hole between the value and a single icon. */
+  margin-right: -4px;
+}
+
+/*
+ * The row with no actions — Ollama, which needs no credential. Its value runs into the
+ * column the icons would have used rather than stopping a slot short for a button that
+ * is not there. An 18px icon centred in a 30px button puts the glyph column 10px in from
+ * the row's edge, and the 9px flex gap is measured from this group's left edge.
+ */
+.pa-provider-actions:empty {
+  margin-right: -7px;
+}
+
+/* A row action: the only affordance on its row, so a step brighter than the default icon
+   button, which is tuned for the history delete that hides until hover. A modifier rather
+   than a descendant selector, which would read as a conflict with the list's rules. */
+.pa-icon-btn--row {
+  width: 30px;
+  height: 30px;
+  color: var(--pa-icon-3);
+}
+
+.pa-icon-btn--row:hover:not(:disabled) {
+  color: var(--pa-text);
+}

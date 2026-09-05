@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Pingask",
+  "version": "0.1.0",
+  "identifier": "me.tanlethanh.pingask",
+  "build": {
+    "beforeDevCommand": "bun run dev:web",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build:web",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Pingask",
+        "width": 620,
+        "height": 92,
+        "minHeight": 92,
+        "maxHeight": 640,
+        "resizable": false,
+        "center": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "visible": false,
+        "transparent": true,
+        "skipTaskbar": true,
+        "shadow": true,
+        "acceptFirstMouse": true,
+        "windowEffects": {
+          "effects": [
+            "hudWindow"
+          ],
+          "state": "active",
+          "radius": 20
+        }
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "category": "Productivity",
+    "shortDescription": "Quick ask, quick answer.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE1QjFERjY5MDE0NTNFNjIKUldSaVBrVUJhZCt4cFhKMzZoenk0clh3NEJ1dmVjWWloZnQ0MEdqVUllcnBzVG9obTZBQ3dMZnYK",
+      "endpoints": [
+        "https://github.com/tanlethanh/pingask/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}
