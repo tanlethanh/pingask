@@ -1,4 +1,4 @@
-// The entire Rust surface of Pingask.
+// The entire Rust surface of PingAsk.
 //
 // RULE: this file only registers official Tauri plugins. No #[tauri::command],
 // no business logic, no serde structs. Every behavior lives in TypeScript and
@@ -22,7 +22,7 @@ pub fn run() {
         builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
 
-    // No Dock tile and no Cmd-Tab entry — Pingask is reached by the hotkey, the
+    // No Dock tile and no Cmd-Tab entry — PingAsk is reached by the hotkey, the
     // way Raycast is. LSUIElement in Info.plist is not enough on its own: tao
     // calls NSApp setActivationPolicy(Regular) when the app finishes launching,
     // which overrides the plist. There is no config key and no JS API for this,

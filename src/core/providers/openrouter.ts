@@ -35,7 +35,7 @@ export const openrouterProvider: ProviderDef = {
       // 'compatible' is the factory default and drops newer request fields;
       // we talk to OpenRouter itself, so ask for the full protocol.
       compatibility: 'strict',
-      appName: 'Pingask',
+      appName: 'PingAsk',
     }).chat(modelId)
   },
   // Only sent when on: OpenRouter proxies whatever the upstream model does by

@@ -54,13 +54,13 @@ export function Footer({ hints, model, onOpenSettings, onQuit, version, warning 
         {warning ? <span className="pa-model pa-model--warning">{warning}</span> : model}
         {/* Where the model chip sits on the other pages: settings has no model to name,
             so the slot carries the one fact you come here to read instead. */}
-        {version ? <span className="pa-version">Pingask {version}</span> : null}
+        {version ? <span className="pa-version">PingAsk {version}</span> : null}
         {onQuit ? (
           <button
             className="pa-icon-btn pa-icon-btn--lg"
             type="button"
             onClick={onQuit}
-            aria-label="Quit Pingask"
+            aria-label="Quit PingAsk"
             title="Quit"
           >
             <PowerIcon />

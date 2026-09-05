@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Pingask",
+  "productName": "PingAsk",
   "version": "0.1.0",
   "identifier": "me.tanlethanh.pingask",
   "build": {
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Pingask",
+        "title": "PingAsk",
         "width": 620,
         "height": 92,
         "minHeight": 92,

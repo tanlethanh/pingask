@@ -20,10 +20,10 @@ const DEFAULT_TIMEOUT_MS = 120_000
 
 // Must contain <head> or <body>: the plugin injects its callback script into one of
 // them and warns if it finds neither.
-const RESPONSE_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>Pingask</title>
+const RESPONSE_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>PingAsk</title>
 <style>html{color-scheme:light dark}body{margin:0;height:100vh;display:grid;place-items:center;
 font:15px/1.5 -apple-system,system-ui,sans-serif}</style></head>
-<body><p>Signed in. You can close this tab and return to Pingask.</p></body></html>`
+<body><p>Signed in. You can close this tab and return to PingAsk.</p></body></html>`
 
 const portBusy = (port: number) =>
   `Could not bind 127.0.0.1:${port} for the sign-in callback. ` +

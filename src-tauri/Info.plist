@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <!--
-    Accessory app: no Dock tile, no menu bar of its own. Pingask is reached by
+    Accessory app: no Dock tile, no menu bar of its own. PingAsk is reached by
     the global hotkey, the way Raycast and Spotlight are. Tauri merges this file
     into the generated bundle Info.plist, so this stays a zero-Rust change
     (PLAN.md decision #2).

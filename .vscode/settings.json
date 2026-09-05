@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["Pingask", "opencode", "pkce", "tauri"],
+  "cSpell.words": ["PingAsk", "opencode", "pkce", "tauri"],
   "editor.defaultFormatter": "biomejs.biome",
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit"

@@ -25,7 +25,7 @@ const REDIRECT_PATH = '/callback'
 const SCOPES = ['org:create_api_key', 'user:profile', 'user:inference']
 
 /**
- * Sent as its own system block ahead of the Pingask prompt.
+ * Sent as its own system block ahead of the PingAsk prompt.
  *
  * UNVERIFIED: the `user:inference` scope is widely reported to reject requests that do
  * not identify themselves as Claude Code. If S3 shows it is not required, delete it —

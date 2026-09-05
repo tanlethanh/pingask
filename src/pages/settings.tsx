@@ -42,7 +42,7 @@ export function SettingsPage() {
   // that is mid-answer.
   const quitApp = async () => {
     const ok = await confirmDestructive({
-      title: 'Quit Pingask?',
+      title: 'Quit PingAsk?',
       message: 'The app closes and the global shortcut stops working until you open it again.',
       okLabel: 'Quit',
     })

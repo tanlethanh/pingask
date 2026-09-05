@@ -1,4 +1,4 @@
-# Pingask v2 — rewrite plan
+# PingAsk v2 — rewrite plan
 
 Decided 2026-09-05 via design interview. Every row below is a settled decision; deviating from one
 means re-opening it deliberately, not drifting.
@@ -155,7 +155,7 @@ Budget: **2–3 hours** for S1 + S2 together. Do not skip them; both can invalid
 
 ### S-Dock — hiding the Dock tile (2026-09-05)
 
-Pingask is hotkey-only, so it should be an accessory app like Raycast: no Dock tile, no Cmd-Tab entry.
+PingAsk is hotkey-only, so it should be an accessory app like Raycast: no Dock tile, no Cmd-Tab entry.
 
 - `LSUIElement` in `src-tauri/Info.plist` is **not sufficient**. tao's app delegate defaults to
   `ActivationPolicy::Regular` (`tao-0.35.3/src/platform_impl/macos/app_delegate.rs:107`) and applies it
@@ -243,9 +243,9 @@ All eight phases implemented. `bun run check` clean, `bun test` 153 passing, app
 | `bun test` | 153 pass / 0 fail, 337 assertions, ~300ms |
 | `cargo check` | Clean |
 | `tauri dev` launch | App renders; panel, placeholder, key hints and the no-provider warning all correct (screenshot taken) |
-| `tauri build` release | `Pingask.app` 6.3 MB + `Pingask_2.0.0_aarch64.dmg` 3.5 MB |
+| `tauri build` release | `PingAsk.app` 6.3 MB + `PingAsk_2.0.0_aarch64.dmg` 3.5 MB |
 | Release bundle launch | Runs, no crash report |
-| Updater artifacts | `Pingask.app.tar.gz` 3.3 MB + a valid `.sig`, signed with the generated key |
+| Updater artifacts | `PingAsk.app.tar.gz` 3.3 MB + a valid `.sig`, signed with the generated key |
 | Code signature | `adhoc, linker-signed` — expected without a Developer ID cert |
 
 **Not verified:** the global hotkey end-to-end. macOS refuses synthetic keystrokes from `osascript`

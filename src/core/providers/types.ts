@@ -68,7 +68,7 @@ export type ProviderOptions = Record<string, Record<string, JSONValue>>
 export interface Quirks {
   headers?: Record<string, string>
   baseURL?: string
-  /** Prepended as its own system block before the Pingask prompt. */
+  /** Prepended as its own system block before the PingAsk prompt. */
   systemPrefix?: string
   /**
    * Ceiling for one answer, when the vendor's own default is the wrong number. Per

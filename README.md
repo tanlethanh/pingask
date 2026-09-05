@@ -1,4 +1,4 @@
-# Pingask
+# PingAsk
 
 A macOS Spotlight-style panel for quickly asking a question. Press shortcut, type question, get an answer, follow up, or browse threads like a cheatsheet.
 
