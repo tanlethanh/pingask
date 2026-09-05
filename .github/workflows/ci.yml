@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUN_VERSION: '1.4.1'
+
+jobs:
+  app:
+    name: typecheck, lint, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: bun install --frozen-lockfile
+
+      - name: Versions in lockstep
+        run: bun run version
+
+      - run: bun run check
+
+      - run: bun test
+
+      - name: Frontend bundle
+        run: bun run build:web
+
+  rust:
+    name: cargo check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: bun install --frozen-lockfile
+
+      # `tauri::generate_context!` embeds dist/ at compile time, so the frontend
+      # has to exist before cargo runs.
+      - name: Frontend bundle
+        run: bun run build:web
+
+      - run: cargo check --locked --manifest-path src-tauri/Cargo.toml --all-targets
+
+  landing:
+    name: landing build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: landing
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run build

@@ -11,6 +11,8 @@
     "dev:web": "BUN_PORT=1420 bun ./index.html",
     "build": "bunx tauri build",
     "build:web": "bun run build.ts",
+    "tauri": "tauri",
+    "version": "bun scripts/version.ts",
     "check": "bunx tsc --noEmit && bunx biome check .",
     "fix": "bunx biome check --write .",
     "test": "bun test"
