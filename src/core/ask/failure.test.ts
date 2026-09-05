@@ -72,6 +72,12 @@ describe('describeFailure', () => {
     expect(describeFailure(new TypeError('Load failed')).kind).toBe('network')
   })
 
+  test('a rejected request points at the model, not the credentials', () => {
+    const failure = describeFailure(apiError(400, "Unsupported value: 'none'"))
+    expect(failure.kind).toBe('bad-request')
+    expect(failure.summary).toBe('This model would not accept the request. Try another model.')
+  })
+
   test('an abort is a kind, not an error to explain', () => {
     expect(describeFailure(new AskError('aborted', 'Cancelled.')).kind).toBe('aborted')
   })

@@ -25,12 +25,15 @@ type StreamPart =
     ? Part
     : never
 
+const withStatus = (status: number, message: string): Error =>
+  Object.assign(new Error(message), { statusCode: status })
+
 const streaming = (chunks: StreamPart[]) =>
   new MockLanguageModelV4({
     doStream: async () => ({ stream: simulateReadableStream({ chunks }) }),
   })
 
-const deltas = (...texts: string[]) => {
+const textChunks = (texts: string[]): StreamPart[] => {
   const chunks: StreamPart[] = [
     { type: 'stream-start', warnings: [] },
     { type: 'text-start', id: '0' },
@@ -38,17 +41,45 @@ const deltas = (...texts: string[]) => {
   for (const delta of texts) chunks.push({ type: 'text-delta', id: '0', delta })
   chunks.push({ type: 'text-end', id: '0' })
   chunks.push({ type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage: USAGE })
-  return streaming(chunks)
+  return chunks
 }
+
+const deltas = (...texts: string[]) => streaming(textChunks(texts))
+
+/** Fails the first attempt, answers the second — one model, two calls. */
+const failsThenAnswers = (error: unknown, ...texts: string[]) => {
+  let calls = 0
+  return new MockLanguageModelV4({
+    doStream: async () => {
+      calls += 1
+      const chunks: StreamPart[] =
+        calls === 1
+          ? [
+              { type: 'stream-start', warnings: [] },
+              { type: 'error', error },
+            ]
+          : textChunks(texts)
+      return { stream: simulateReadableStream({ chunks }) }
+    },
+  })
+}
+
+/** OpenAI's real 400 for `reasoningEffort: 'none'` on a model without that tier. */
+const REJECTED_EFFORT = Object.assign(
+  withStatus(400, "Unsupported value: 'none' is not supported with the 'gpt-5-mini' model."),
+  {
+    responseBody:
+      '{"error":{"message":"Unsupported value: \'none\' is not supported with the \'gpt-5-mini\' model.","type":"invalid_request_error","param":"reasoning.effort","code":"unsupported_value"}}',
+  },
+)
+
+const EFFORT_OPTIONS = { openai: { reasoningEffort: 'none' } }
 
 const failsWith = (error: unknown) =>
   streaming([
     { type: 'stream-start', warnings: [] },
     { type: 'error', error },
   ])
-
-const withStatus = (status: number, message: string): Error =>
-  Object.assign(new Error(message), { statusCode: status })
 
 describe('askStream', () => {
   test('streams deltas and resolves with the full text', async () => {
@@ -129,6 +160,64 @@ describe('askStream', () => {
     }
   })
 
+  // The vendor rejects a setting we chose, not the question the user asked, so the turn
+  // is worth one more try without it — an answer beats an error bubble about a parameter.
+  test('drops a rejected option and answers on the second attempt', async () => {
+    const model = failsThenAnswers(REJECTED_EFFORT, 'plain ', 'answer')
+    const text = await askStream({
+      model,
+      system: [],
+      messages: [user('hi')],
+      providerOptions: EFFORT_OPTIONS,
+    })
+
+    expect(text).toBe('plain answer')
+    expect(model.doStreamCalls).toHaveLength(2)
+    expect(model.doStreamCalls[0]?.providerOptions).toEqual(EFFORT_OPTIONS)
+    expect(model.doStreamCalls[1]?.providerOptions).toBeUndefined()
+  })
+
+  test('a 400 about anything else is not retried', async () => {
+    const model = failsThenAnswers(withStatus(400, 'This model is not on your plan.'), 'never')
+    const call = askStream({
+      model,
+      system: [],
+      messages: [user('hi')],
+      providerOptions: EFFORT_OPTIONS,
+    })
+
+    await expect(call).rejects.toMatchObject({ kind: 'bad-request' })
+    expect(model.doStreamCalls).toHaveLength(1)
+  })
+
+  test('never retries once text is on screen — it would answer twice', async () => {
+    const chunks: string[] = []
+    const model = new MockLanguageModelV4({
+      doStream: async () => ({
+        stream: simulateReadableStream({
+          chunks: [
+            { type: 'stream-start', warnings: [] },
+            { type: 'text-start', id: '0' },
+            { type: 'text-delta', id: '0', delta: 'half an ' },
+            { type: 'error', error: REJECTED_EFFORT },
+          ],
+        }),
+      }),
+    })
+
+    const call = askStream({
+      model,
+      system: [],
+      messages: [user('hi')],
+      providerOptions: EFFORT_OPTIONS,
+      onChunk: (delta) => chunks.push(delta),
+    })
+
+    await expect(call).rejects.toMatchObject({ kind: 'bad-request' })
+    expect(chunks).toEqual(['half an '])
+    expect(model.doStreamCalls).toHaveLength(1)
+  })
+
   // The SDK rejects its own result promises here — promises askStream never reads — so
   // without this an empty stream resolved as an empty answer with nothing to explain it.
   test('a stream that ends with no text and no error is still a failure', async () => {
@@ -151,7 +240,8 @@ describe('toAskError', () => {
     [429, 'rate-limit'],
     [500, 'network'],
     [503, 'network'],
-    [400, 'unknown'],
+    [400, 'bad-request'],
+    [404, 'bad-request'],
   ]
 
   test.each(httpCases)('maps HTTP %i to %s', (status, kind) => {

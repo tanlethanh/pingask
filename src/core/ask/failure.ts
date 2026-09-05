@@ -19,6 +19,7 @@ export interface Failure {
 const SUMMARIES: Record<AskErrorKind, string> = {
   auth: 'The provider rejected these credentials. Reconnect it in settings.',
   'rate-limit': 'The provider is rate-limiting this account. Try again in a moment.',
+  'bad-request': 'This model would not accept the request. Try another model.',
   network: 'Could not reach the provider. Check the connection and try again.',
   aborted: 'Cancelled.',
   unknown: 'The request failed.',

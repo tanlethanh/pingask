@@ -53,6 +53,23 @@ describe('buildProviderOptions', () => {
     })
   })
 
+  test('OpenAI models without a no-effort tier get their own floor', () => {
+    // Regression: the gpt-5 line answers 400 to 'none' ("not supported with the
+    // 'gpt-5-mini' model"), and the o-series has no 'minimal' either.
+    expect(buildProviderOptions('openai:gpt-5-mini', { thinking: false }, MODELS)).toEqual({
+      openai: { reasoningEffort: 'minimal' },
+    })
+    expect(buildProviderOptions('openai:gpt-5', { thinking: false }, MODELS)).toEqual({
+      openai: { reasoningEffort: 'minimal' },
+    })
+    expect(buildProviderOptions('openai:o4-mini', { thinking: false }, MODELS)).toEqual({
+      openai: { reasoningEffort: 'low' },
+    })
+    expect(buildProviderOptions('openai:gpt-5.1', { thinking: false }, MODELS)).toEqual({
+      openai: { reasoningEffort: 'none' },
+    })
+  })
+
   test('Ollama always receives an explicit think flag', () => {
     expect(buildProviderOptions('ollama:llama3.2:latest', { thinking: false }, MODELS)).toEqual({
       ollama: { think: false },

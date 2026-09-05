@@ -13,6 +13,19 @@ const FALLBACK: ModelDef[] = [
   { id: 'gpt-5.4-mini', label: 'GPT-5.4 mini' },
 ]
 
+/**
+ * The lowest effort a model actually accepts, for the thinking-off path.
+ *
+ * 'none' arrived with GPT-5.1. The original gpt-5 line — gpt-5, gpt-5-mini,
+ * gpt-5-nano — answers 400 ("'none' is not supported with the 'gpt-5-mini' model")
+ * and floors at 'minimal'; the o-series has neither and floors at 'low'.
+ */
+const offEffort = (modelId: string): 'none' | 'minimal' | 'low' => {
+  if (/^o\d/.test(modelId)) return 'low'
+  if (/^gpt-5(-|$)/.test(modelId)) return 'minimal'
+  return 'none'
+}
+
 export const openaiProvider: ProviderDef = {
   id: 'openai',
   label: 'OpenAI',
@@ -33,9 +46,9 @@ export const openaiProvider: ProviderDef = {
     return createOpenAI({ apiKey: cred.key, fetch: sdkFetch(ports.fetch) })(modelId)
   },
   // Always sent, both ways. Reasoning models default to a middling effort, which
-  // costs seconds on every quick lookup — 'none' is what makes the off state fast
-  // rather than merely un-configured.
-  providerOptions: (prefs) => ({
-    openai: { reasoningEffort: prefs.thinking ? 'low' : 'none' },
+  // costs seconds on every quick lookup — the floor below is what makes the off
+  // state fast rather than merely un-configured.
+  providerOptions: (prefs, modelId) => ({
+    openai: { reasoningEffort: prefs.thinking ? 'low' : offEffort(modelId) },
   }),
 }

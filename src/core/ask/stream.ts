@@ -3,7 +3,7 @@ import type { ProviderOptions } from '../providers/types.ts'
 import type { Message } from '../threads/model.ts'
 import { messageOf, oneLine, record, statusOf } from './error-fields.ts'
 
-export type AskErrorKind = 'auth' | 'rate-limit' | 'network' | 'aborted' | 'unknown'
+export type AskErrorKind = 'auth' | 'rate-limit' | 'bad-request' | 'network' | 'aborted' | 'unknown'
 
 /** Every failure askStream throws. The UI switches on `kind`, never on the text. */
 export class AskError extends Error {
@@ -74,6 +74,10 @@ export const toAskError = (error: unknown): AskError => {
   const status = statusOf(cause)
   if (status === 401 || status === 403) return new AskError('auth', textOf(cause), { cause: error })
   if (status === 429) return new AskError('rate-limit', textOf(cause), { cause: error })
+  // Everything else in the 4xx range is the request itself being wrong — a parameter the
+  // model does not take, a model that does not exist. Retrying it unchanged never helps.
+  if (status !== undefined && status >= 400 && status < 500)
+    return new AskError('bad-request', textOf(cause), { cause: error })
   if (status !== undefined && status >= 500)
     return new AskError('network', textOf(cause), { cause: error })
 
@@ -94,6 +98,31 @@ export const toAskError = (error: unknown): AskError => {
     }
   }
   return new AskError('unknown', message, { cause: error })
+}
+
+/**
+ * The words a vendor would use for the options we sent: 'reasoningEffort' is
+ * `reasoning.effort` in OpenAI's reply and `reasoning` in OpenRouter's. Short words are
+ * dropped — they match sentences that are about something else.
+ */
+const optionWords = (options: ProviderOptions): string[] =>
+  Object.values(options)
+    .flatMap((entry) => Object.keys(entry))
+    .flatMap((key) => key.split(/(?=[A-Z])/))
+    .map((word) => word.toLowerCase())
+    .filter((word) => word.length > 3)
+
+/**
+ * Whether the vendor rejected a setting we chose rather than the question the user asked.
+ *
+ * "'none' is not supported with the 'gpt-5-mini' model" is our bug, not theirs: the model
+ * answers fine without the option, so the request is worth one more try. Anything else —
+ * a model that is not on the plan, a prompt that is too long — is not.
+ */
+const rejectsOptions = (error: AskError, options: ProviderOptions | undefined): boolean => {
+  if (!options || error.kind !== 'bad-request') return false
+  const text = error.message.toLowerCase()
+  return optionWords(options).some((word) => text.includes(word))
 }
 
 export interface AskStreamOptions {
@@ -121,11 +150,8 @@ const toModelMessages = (messages: Message[]): ModelMessage[] =>
           : { role: 'user', content: message.text },
     )
 
-/**
- * One turn of inference. Streams deltas to `onChunk`, resolves with the full
- * text, and throws AskError for everything else.
- */
-export const askStream = async ({
+/** One attempt, exactly as configured. */
+const runStream = async ({
   model,
   system,
   messages,
@@ -179,4 +205,31 @@ export const askStream = async ({
   // answer bubble with nothing to explain it.
   if (!text) throw new AskError('unknown', 'The model returned no output.')
   return text
+}
+
+/**
+ * One turn of inference. Streams deltas to `onChunk`, resolves with the full
+ * text, and throws AskError for everything else.
+ *
+ * A vendor that rejects one of our own generation options gets a second, plain attempt
+ * rather than an error bubble: the user asked a question, not for extended thinking, and
+ * an answer without the option beats no answer at all. Only before the first delta —
+ * once text is on screen, a retry would print the answer twice.
+ */
+export const askStream = async (options: AskStreamOptions): Promise<string> => {
+  let started = false
+  try {
+    return await runStream({
+      ...options,
+      onChunk: (delta) => {
+        started = true
+        options.onChunk?.(delta)
+      },
+    })
+  } catch (error) {
+    const failure = toAskError(error)
+    if (started || !rejectsOptions(failure, options.providerOptions)) throw failure
+    const { providerOptions: _rejected, ...plain } = options
+    return await runStream(plain)
+  }
 }
