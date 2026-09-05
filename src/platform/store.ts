@@ -1,5 +1,5 @@
 // KeyValueStore over tauri-plugin-store. One JSON file per store, all of them under
-// ~/Library/Application Support/me.tanlethanh.pingask/ (see PLAN.md decision #8).
+// ~/Library/Application Support/com.pingask.app/ (see PLAN.md decision #8).
 
 import { load, type Store } from '@tauri-apps/plugin-store'
 import type { KeyValueStore } from '../core/ports.ts'

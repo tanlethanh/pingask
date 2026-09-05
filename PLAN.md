@@ -83,7 +83,7 @@ still in git history before that commit.
 
 Files on disk:
 ```
-~/Library/Application Support/me.tanlethanh.pingask/
+~/Library/Application Support/com.pingask.app/
   auth.json      { "claude": {type:'oauth',refresh,access,expires}, "openai": {type:'api',key} }
   settings.json  { keybinding, model, systemPrompt? }
   threads.json   [ Thread, ... ]

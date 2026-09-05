@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "PingAsk",
   "version": "0.1.0",
-  "identifier": "me.tanlethanh.pingask",
+  "identifier": "com.pingask.app",
   "build": {
     "beforeDevCommand": "bun run dev:web",
     "devUrl": "http://localhost:1420",
